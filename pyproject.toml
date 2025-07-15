@@ -1,0 +1,47 @@
+[project]
+name = "openai-agents-demos"
+version = "0.1.0"
+description = "OpenAI Agents Python SDK Demo Repository"
+authors = [{ name = "OpenAI Agents Demo", email = "demo@example.com" }]
+requires-python = ">=3.10"
+readme = "README.md"
+license = "MIT"
+dependencies = [
+    "temporalio>=1.14.1,<2",
+    "openai-agents>=0.0.19",
+    "temporalio[openai-agents]>=1.14.1",
+    "pydantic>=2.10.6,<3",
+]
+
+[project.urls]
+Homepage = "https://github.com/openai/openai-agents-demos"
+Repository = "https://github.com/openai/openai-agents-demos"
+Documentation = "https://docs.temporal.io/docs/python"
+
+[dependency-groups]
+dev = [
+    "black>=22.3.0,<23",
+    "isort>=5.10.1,<6",
+    "mypy>=1.4.1,<2",
+    "pytest>=7.1.2,<8",
+    "pytest-asyncio>=0.18.3,<0.19",
+    "pyright>=1.1.394",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+
+[tool.mypy]
+ignore_missing_imports = true
+namespace_packages = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["openai_agents"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,6 +1,6 @@
 from temporalio import workflow
 
-from openai_agents.workflows.research_agents.research_manager import ResearchManager
+from openai_agents.workflows.research_agents.research_manager import InteractiveResearchManager
 from openai_agents.workflows.research_agents.research_models import (
     ClarificationInput,
     ResearchInteraction,
@@ -13,7 +13,7 @@ from openai_agents.workflows.research_agents.research_models import (
 @workflow.defn
 class InteractiveResearchWorkflow:
     def __init__(self):
-        self.research_manager = ResearchManager()
+        self.research_manager = InteractiveResearchManager()
         self.current_interaction: ResearchInteraction | None = None
         self._end_workflow = False
 

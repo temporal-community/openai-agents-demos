@@ -43,7 +43,7 @@ class ClarificationResult:
     research_output: Optional[str] = None
 
 
-class ResearchManager:
+class InteractiveResearchManager:
     def __init__(self):
         self.run_config = RunConfig()
         self.search_agent = new_search_agent()

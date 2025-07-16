@@ -38,7 +38,7 @@ User Query → Triage Agent → Decision
    - Optimizes prompt for deep research model
    - Hands off to existing research pipeline
 
-4. **ResearchManager** (`research_manager.py`)
+4. **InteractiveResearchManager** (`research_manager.py`)
    - Enhanced to support both direct and interactive flows
    - Manages agent orchestration and state
    - Integrates with Temporal workflow updates

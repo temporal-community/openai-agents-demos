@@ -103,7 +103,7 @@ This example is designed to be similar to the OpenAI Cookbook: [Introduction to 
 **Files:**
 - `openai_agents/workflows/interactive_research_workflow.py` - Interactive research workflow
 - `openai_agents/workflows/research_agents/` - All research agent components
-- `openai_agents/run_interactive_research.py` - Interactive research client
+- `openai_agents/run_interactive_research_workflow.py` - Interactive research client
 
 **Agents:**
 - **Triage Agent**: Analyzes research queries and determines if clarifications are needed
@@ -115,7 +115,7 @@ This example is designed to be similar to the OpenAI Cookbook: [Introduction to 
 
 **To run:**
 ```bash
-uv run openai_agents/run_interactive_research.py "Tell me about quantum computing"
+uv run openai_agents/run_interactive_research_workflow.py "Tell me about quantum computing"
 ```
 
 **Additional options:**
@@ -139,7 +139,7 @@ openai-agents-demos/
 │   ├── run_hello_world_workflow.py     # Hello World demo runner
 │   ├── run_tools_workflow.py           # Tools demo runner
 │   ├── run_research_workflow.py        # Research demo runner
-│   ├── run_interactive_research.py     # Interactive research demo runner
+│   ├── run_interactive_research_workflow.py     # Interactive research demo runner
 │   └── workflows/
 │       ├── __init__.py
 │       ├── hello_world_workflow.py     # Simple haiku agent

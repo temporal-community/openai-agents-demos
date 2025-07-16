@@ -1,6 +1,6 @@
 # OpenAI Agents Python SDK Demos
 
-This repository contains three standalone demos showcasing the OpenAI Agents Python SDK integrated with Temporal's durable execution.
+This repository contains four standalone demos showcasing the OpenAI Agents Python SDK integrated with Temporal's durable execution.
 
 ## Prerequisites
 
@@ -75,7 +75,30 @@ uv run openai_agents/run_tools_workflow.py
 
 ### Demo 3: Research Workflow
 
-An advanced multi-agent research system with interactive clarifying questions.
+A multi-agent research system that processes queries and generates comprehensive reports.
+
+**Files:**
+- `openai_agents/workflows/research_bot_workflow.py` - Main research workflow
+- `openai_agents/workflows/research_agents/` - All research agent components
+- `openai_agents/run_research_workflow.py` - Research client
+
+**Features:**
+- Triage agent to analyze research queries
+- Search agent to gather information
+- Writer agent to compile the final report
+
+**To run:**
+```bash
+uv run openai_agents/run_research_workflow.py "Tell me about quantum computing"
+```
+
+**Note:** The research workflow may take 2-3 minutes to complete due to web searches and report generation.
+
+### Demo 4: Multi-Agent Interactive Research Workflow
+
+An enhanced version of the research workflow with interactive clarifying questions to refine research parameters before execution.
+
+This example is designed to be similar to the OpenAI Cookbook: [Introduction to deep research in the OpenAI API](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api)
 
 **Files:**
 - `openai_agents/workflows/research_bot_workflow.py` - Main research workflow
@@ -85,24 +108,17 @@ An advanced multi-agent research system with interactive clarifying questions.
 **Features:**
 - Triage agent to analyze research queries
 - Clarifying agent to generate follow-up questions
-- Instruction agent to refine research parameters
+- Instruction agent to refine research parameters based on user responses
 - Search agent to gather information
 - Writer agent to compile the final report
 
-**To run (Basic mode):**
-```bash
-uv run openai_agents/run_research_workflow.py "Tell me about quantum computing"
-```
-
-**To run (Interactive mode with clarifying questions):**
-
-This example is designed to be similar to the OpenAI Cookbook: [Introduction to deep research in the OpenAI API](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api)
+**To run:**
 
 ```bash
 uv run openai_agents/run_research_workflow.py --interactive "Tell me about quantum computing"
 ```
 
-**Note:** The research workflow may take 2-3 minutes to complete due to web searches and report generation.
+**Note:** The interactive workflow may take 2-3 minutes to complete due to web searches and report generation.
 
 ## Project Structure
 

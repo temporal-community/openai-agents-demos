@@ -15,6 +15,7 @@ from temporalio.worker import Worker
 from openai_agents.workflows.get_weather_activity import get_weather
 from openai_agents.workflows.hello_world_workflow import HelloWorldAgent
 from openai_agents.workflows.research_bot_workflow import ResearchWorkflow
+from openai_agents.workflows.interactive_research_workflow import InteractiveResearchWorkflow
 from openai_agents.workflows.tools_workflow import ToolsWorkflow
 
 
@@ -37,6 +38,7 @@ async def main():
                 HelloWorldAgent,
                 ToolsWorkflow,
                 ResearchWorkflow,
+                InteractiveResearchWorkflow,
             ],
             activities=[
                 ModelActivity().invoke_model_activity,

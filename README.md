@@ -73,19 +73,19 @@ An agent that uses a weather activity as a tool.
 uv run openai_agents/run_tools_workflow.py
 ```
 
-### Demo 3: Research Workflow
+### Demo 3: Basic Research Workflow
 
-A multi-agent research system that processes queries and generates comprehensive reports.
+A research system that processes queries and generates comprehensive reports.
 
 **Files:**
 - `openai_agents/workflows/research_bot_workflow.py` - Main research workflow
 - `openai_agents/workflows/research_agents/` - All research agent components
 - `openai_agents/run_research_workflow.py` - Research client
 
-**Features:**
-- Triage agent to analyze research queries
-- Search agent to gather information
-- Writer agent to compile the final report
+**Agents:**
+- **Planner Agent**: Plans web searches based on the query
+- **Search Agent**: Performs searches to gather information
+- **Writer Agent**: Compiles the final research report
 
 **To run:**
 ```bash
@@ -101,22 +101,28 @@ An enhanced version of the research workflow with interactive clarifying questio
 This example is designed to be similar to the OpenAI Cookbook: [Introduction to deep research in the OpenAI API](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api)
 
 **Files:**
-- `openai_agents/workflows/research_bot_workflow.py` - Main research workflow
+- `openai_agents/workflows/interactive_research_workflow.py` - Interactive research workflow
 - `openai_agents/workflows/research_agents/` - All research agent components
-- `openai_agents/run_research_workflow.py` - Interactive research client
+- `openai_agents/run_interactive_research.py` - Interactive research client
 
-**Features:**
-- Triage agent to analyze research queries
-- Clarifying agent to generate follow-up questions
-- Instruction agent to refine research parameters based on user responses
-- Search agent to gather information
-- Writer agent to compile the final report
+**Agents:**
+- **Triage Agent**: Analyzes research queries and determines if clarifications are needed
+- **Clarifying Agent**: Generates follow-up questions for better research parameters
+- **Instruction Agent**: Refines research parameters based on user responses
+- **Planner Agent**: Creates web search plans
+- **Search Agent**: Performs web searches
+- **Writer Agent**: Compiles final research reports
 
 **To run:**
-
 ```bash
-uv run openai_agents/run_research_workflow.py --interactive "Tell me about quantum computing"
+uv run openai_agents/run_interactive_research.py "Tell me about quantum computing"
 ```
+
+**Additional options:**
+- `--workflow-id`: Specify custom workflow ID
+- `--new-session`: Force start a new workflow session
+- `--status`: Get status of existing workflow
+- `--clarify`: Send clarification responses
 
 **Note:** The interactive workflow may take 2-3 minutes to complete due to web searches and report generation.
 
@@ -133,12 +139,14 @@ openai-agents-demos/
 │   ├── run_hello_world_workflow.py     # Hello World demo runner
 │   ├── run_tools_workflow.py           # Tools demo runner
 │   ├── run_research_workflow.py        # Research demo runner
+│   ├── run_interactive_research.py     # Interactive research demo runner
 │   └── workflows/
 │       ├── __init__.py
 │       ├── hello_world_workflow.py     # Simple haiku agent
 │       ├── tools_workflow.py           # Weather tool demo
 │       ├── get_weather_activity.py     # Weather activity
 │       ├── research_bot_workflow.py    # Main research workflow
+│       ├── interactive_research_workflow.py  # Interactive research workflow
 │       └── research_agents/            # Research agent components
 │           ├── __init__.py
 │           ├── README.md               # Research agents documentation

@@ -126,3 +126,6 @@ uv.lock
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Claude Code
+CLAUDE.md

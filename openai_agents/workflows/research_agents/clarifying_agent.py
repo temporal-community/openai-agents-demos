@@ -3,17 +3,19 @@ from __future__ import annotations
 from typing import List
 
 from pydantic import BaseModel
-
 from temporalio import workflow
 
 with workflow.unsafe.imports_passed_through():
     from agents import Agent
 
-    from openai_agents.workflows.research_agents.instruction_agent import new_instruction_agent
+    from openai_agents.workflows.research_agents.instruction_agent import (
+        new_instruction_agent,
+    )
 
 
 class Clarifications(BaseModel):
     """Structured output for clarifying questions"""
+
     questions: List[str]
 
 
@@ -32,7 +34,7 @@ GUIDELINES:
 def new_clarifying_agent() -> Agent:
     """Create a new clarifying questions agent"""
     instruction_agent = new_instruction_agent()
-    
+
     return Agent(
         name="Clarifying Questions Agent",
         model="gpt-4o-mini",

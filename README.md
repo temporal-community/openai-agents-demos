@@ -160,6 +160,20 @@ openai-agents-demos/
 │           └── writer_agent.py         # Report writing agent
 ```
 
+## Development
+
+### Code Quality Tools
+
+```bash
+# Format code
+uv run -m black .
+uv run -m isort .
+
+# Type checking
+uv run -m mypy --check-untyped-defs --namespace-packages .
+uv run pyright .
+```
+
 ## Key Features
 
 - **Temporal Workflows**: All demos use Temporal for reliable workflow orchestration

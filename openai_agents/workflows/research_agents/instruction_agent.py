@@ -56,9 +56,9 @@ IMPORTANT: SPECIFY REQUIRED OUTPUT LANGUAGE IN THE PROMPT
 def new_instruction_agent() -> Agent:
     """Create a new research instruction agent"""
     planner_agent = new_planner_agent()
-    
+
     return Agent(
-        name="Research Instruction Agent", 
+        name="Research Instruction Agent",
         model="gpt-4o-mini",
         instructions=RESEARCH_INSTRUCTION_AGENT_PROMPT,
         handoffs=[planner_agent],

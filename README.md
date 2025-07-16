@@ -95,6 +95,8 @@ uv run openai_agents/run_research_workflow.py "Tell me about quantum computing"
 ```
 
 **To run (Interactive mode with clarifying questions):**
+Enhanced to be similar to the OpenAI Cookbook: [Introduction to deep research in the OpenAI API](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api)
+
 ```bash
 uv run openai_agents/run_research_workflow.py --interactive "Tell me about quantum computing"
 ```

@@ -9,6 +9,7 @@ For detailed information about the research agents in this repo, see [openai_age
 1. **Python 3.10+** - Required for the demos
 2. **Temporal Server** - Must be running locally on `localhost:7233`
 3. **OpenAI API Key** - Set as environment variable `OPENAI_API_KEY`
+4. **PDF Generation Dependencies** - Required for PDF output (optional)
 
 ### Starting Temporal Server
 
@@ -19,6 +20,43 @@ curl -sSf https://temporal.download/cli.sh | sh
 # Start Temporal server
 temporal server start-dev
 ```
+
+### PDF Generation Dependencies
+
+For PDF generation functionality, you'll need WeasyPrint and its system dependencies:
+
+#### macOS (using Homebrew)
+```bash
+brew install weasyprint
+# OR install system dependencies for pip installation:
+brew install pango glib gtk+3 libffi
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+# For package installation:
+sudo apt install weasyprint
+
+# OR for pip installation:
+sudo apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
+```
+
+#### Linux (Fedora)
+```bash
+# For package installation:
+sudo dnf install weasyprint
+
+# OR for pip installation:
+sudo dnf install python-pip pango
+```
+
+#### Windows
+1. Install Python from Microsoft Store
+2. Install MSYS2 from https://www.msys2.org/
+3. In MSYS2 shell: `pacman -S mingw-w64-x86_64-pango`
+4. Set environment variable: `WEASYPRINT_DLL_DIRECTORIES=C:\msys64\mingw64\bin`
+
+**Note:** PDF generation gracefully degrades when dependencies are unavailable - workflows will still generate markdown reports.
 
 ## Setup
 
@@ -77,28 +115,35 @@ uv run openai_agents/run_tools_workflow.py
 
 ### Demo 3: Basic Research Workflow
 
-A research system that processes queries and generates comprehensive reports.
+A research system that processes queries and generates comprehensive reports with optional PDF generation.
 
 **Files:**
 - `openai_agents/workflows/research_bot_workflow.py` - Main research workflow
 - `openai_agents/workflows/research_agents/` - All research agent components
 - `openai_agents/run_research_workflow.py` - Research client
+- `openai_agents/workflows/pdf_generation_activity.py` - PDF generation activity
+- `openai_agents/workflows/research_agents/pdf_generator_agent.py` - PDF generation agent
 
 **Agents:**
 - **Planner Agent**: Plans web searches based on the query
 - **Search Agent**: Performs searches to gather information
 - **Writer Agent**: Compiles the final research report
+- **PDF Generator Agent**: Converts markdown reports to professionally formatted PDFs
 
 **To run:**
 ```bash
 uv run openai_agents/run_research_workflow.py "Tell me about quantum computing"
 ```
 
+**Output:**
+- `research_report.md` - Comprehensive markdown report
+- `pdf_output/research_report.pdf` - Professionally formatted PDF (if PDF generation is available)
+
 **Note:** The research workflow may take 2-3 minutes to complete due to web searches and report generation.
 
 ### Demo 4: Multi-Agent Interactive Research Workflow
 
-An enhanced version of the research workflow with interactive clarifying questions to refine research parameters before execution.
+An enhanced version of the research workflow with interactive clarifying questions to refine research parameters before execution and optional PDF generation.
 
 This example is designed to be similar to the OpenAI Cookbook: [Introduction to deep research in the OpenAI API](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api)
 
@@ -106,6 +151,8 @@ This example is designed to be similar to the OpenAI Cookbook: [Introduction to 
 - `openai_agents/workflows/interactive_research_workflow.py` - Interactive research workflow
 - `openai_agents/workflows/research_agents/` - All research agent components
 - `openai_agents/run_interactive_research_workflow.py` - Interactive research client
+- `openai_agents/workflows/pdf_generation_activity.py` - PDF generation activity
+- `openai_agents/workflows/research_agents/pdf_generator_agent.py` - PDF generation agent
 
 **Agents:**
 - **Triage Agent**: Analyzes research queries and determines if clarifications are needed
@@ -114,6 +161,7 @@ This example is designed to be similar to the OpenAI Cookbook: [Introduction to 
 - **Planner Agent**: Creates web search plans
 - **Search Agent**: Performs web searches
 - **Writer Agent**: Compiles final research reports
+- **PDF Generator Agent**: Converts markdown reports to professionally formatted PDFs
 
 **To run:**
 ```bash
@@ -125,6 +173,10 @@ uv run openai_agents/run_interactive_research_workflow.py "Tell me about quantum
 - `--new-session`: Force start a new workflow session
 - `--status`: Get status of existing workflow
 - `--clarify`: Send clarification responses
+
+**Output:**
+- `research_report.md` - Comprehensive markdown report
+- `pdf_output/research_report.pdf` - Professionally formatted PDF (if PDF generation is available)
 
 **Note:** The interactive workflow may take 2-3 minutes to complete due to web searches and report generation.
 
@@ -149,6 +201,7 @@ openai-agents-demos/
 │       ├── get_weather_activity.py     # Weather activity
 │       ├── research_bot_workflow.py    # Main research workflow
 │       ├── interactive_research_workflow.py  # Interactive research workflow
+│       ├── pdf_generation_activity.py  # PDF generation activity
 │       └── research_agents/            # Research agent components
 │           ├── __init__.py
 │           ├── README.md               # Research agents documentation
@@ -159,7 +212,8 @@ openai-agents-demos/
 │           ├── instruction_agent.py    # Research instruction agent
 │           ├── planner_agent.py        # Research planning agent
 │           ├── search_agent.py         # Web search agent
-│           └── writer_agent.py         # Report writing agent
+│           ├── writer_agent.py         # Report writing agent
+│           └── pdf_generator_agent.py  # PDF generation agent
 ```
 
 ## Development
@@ -183,6 +237,7 @@ uv run pyright .
 - **Multi-Agent Systems**: The research demo showcases complex multi-agent coordination
 - **Interactive Workflows**: Research demo supports real-time user interaction
 - **Tool Integration**: Tools demo shows how to integrate external activities
+- **PDF Generation**: Research workflows generate professional PDF reports alongside markdown
 
 ## License
 

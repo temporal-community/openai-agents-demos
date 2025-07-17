@@ -89,19 +89,16 @@ class InteractiveResearchManager:
 
             # Check if clarifications were generated
             clarifications = self._extract_clarifications(result)
-            if clarifications:
+            if clarifications and isinstance(clarifications, Clarifications):
                 return ClarificationResult(
                     needs_clarifications=True, questions=clarifications.questions
                 )
             else:
                 # No clarifications needed, continue with research
-                # The triage agent routed to instruction agent, continue the flow
-                final_output = result.final_output
-                if hasattr(final_output, "markdown_report"):
-                    research_output = final_output.markdown_report
-                else:
-                    research_output = str(final_output)
-
+                # The triage agent routed to instruction agent, which should then 
+                # continue through planner -> search -> writer automatically
+                # Let's run the direct research flow since no clarifications are needed
+                research_output = await self._run_direct(query)
                 return ClarificationResult(
                     needs_clarifications=False, research_output=research_output
                 )

@@ -31,51 +31,47 @@ async def run_interactive_research_wealth_pattern(
         handle = client.get_workflow_handle(workflow_id)
         print("Checking if workflow is already running...")
 
-        # Try to get the status to see if it's still running
         try:
             status = await handle.query(InteractiveResearchWorkflow.get_status)
-            if status and status.status not in ["completed"]:
+            if status and status.status not in ["completed", "failed", "timed_out", "terminated", "canceled"]:
                 print("Found existing running workflow, using it...")
                 start_new = False
             else:
-                print("Existing workflow is completed, will start new one...")
-        except Exception as query_error:
-            print(f"Error querying workflow (likely completed): {query_error}")
-            print("Will start a new workflow...")
+                print("Existing workflow is not running, will start a new one...")
+        except Exception:
+            print("Could not query existing workflow, will start a new one...")
 
-    except Exception as handle_error:
-        print(f"Workflow not found: {handle_error}")
-        print("Will start a new workflow...")
+    except Exception:
+        print("Workflow not found, will start a new one...")
 
     if start_new:
-        # Use a unique workflow ID to avoid conflicts
         import time
-
         unique_id = f"{workflow_id}-{int(time.time())}"
         print(f"Starting new research workflow: {unique_id}")
 
         try:
             handle = await client.start_workflow(
                 InteractiveResearchWorkflow.run,
-                args=[None, False],  # No initial query, we'll send it via update
+                args=[None, False],
                 id=unique_id,
                 task_queue="openai-agents-task-queue",
             )
         except Exception as start_error:
             print(f"❌ Failed to start workflow: {start_error}")
-            print("💡 Try using the --new-session flag to force a new session")
             raise
 
     if not handle:
         raise RuntimeError("Failed to get workflow handle")
 
-    # Start the research process
-    print(f"🔄 Initiating research for: {query}")
-    await handle.execute_update(
-        InteractiveResearchWorkflow.start_research, UserQueryInput(query=query)
-    )
+    # Start the research process if it's a new workflow or not yet started
+    current_status = await handle.query(InteractiveResearchWorkflow.get_status)
+    if not current_status or current_status.status == "pending":
+        print(f"🔄 Initiating research for: {query}")
+        await handle.execute_update(
+            InteractiveResearchWorkflow.start_research, UserQueryInput(query=query)
+        )
 
-    # Interactive loop - like wealth management
+    # Interactive loop for Q&A
     while True:
         try:
             status = await handle.query(InteractiveResearchWorkflow.get_status)
@@ -84,15 +80,15 @@ async def run_interactive_research_wealth_pattern(
                 await asyncio.sleep(1)
                 continue
 
-            if status.status == "awaiting_clarifications":
+            # States for asking questions
+            if status.status in ["awaiting_clarifications", "collecting_answers"]:
                 print(
                     f"\n❓ I need to ask you some clarifying questions to provide better research."
                 )
                 print("-" * 60)
 
-                # Show first question
-                current_question = status.get_current_question()
-                if current_question:
+                while status.get_current_question() is not None:
+                    current_question = status.get_current_question()
                     print(
                         f"Question {status.current_question_index + 1} of {len(status.clarification_questions or [])}"
                     )
@@ -102,70 +98,59 @@ async def run_interactive_research_wealth_pattern(
 
                     if answer.lower() in ["exit", "quit", "end", "done"]:
                         print("Ending research session...")
-                        await handle.signal(
-                            InteractiveResearchWorkflow.end_workflow_signal
-                        )
-                        break
+                        await handle.signal(InteractiveResearchWorkflow.end_workflow_signal)
+                        return # Exit the function entirely
 
-                    # Send single answer
-                    await handle.execute_update(
+                    status = await handle.execute_update(
                         InteractiveResearchWorkflow.provide_single_clarification,
                         SingleClarificationInput(
                             question_index=status.current_question_index,
                             answer=answer or "No specific preference",
                         ),
                     )
+                # After loop, all questions are answered, continue to outer loop to check new status
 
-            elif status.status == "collecting_answers":
-                # Get next question
-                current_question = status.get_current_question()
-                if current_question:
-                    print(
-                        f"\nQuestion {status.current_question_index + 1} of {len(status.clarification_questions or [])}"
-                    )
-                    print(f"{current_question}")
-
-                    answer = input("Your answer: ").strip()
-
-                    if answer.lower() in ["exit", "quit", "end", "done"]:
-                        print("Ending research session...")
-                        await handle.signal(
-                            InteractiveResearchWorkflow.end_workflow_signal
-                        )
-                        break
-
-                    # Send single answer
-                    await handle.execute_update(
-                        InteractiveResearchWorkflow.provide_single_clarification,
-                        SingleClarificationInput(
-                            question_index=status.current_question_index,
-                            answer=answer or "No specific preference",
-                        ),
-                    )
-
+            # Research has started, time to break the polling loop and wait
             elif status.status == "researching":
-                print("🔍 Conducting research with your preferences...")
-                await asyncio.sleep(3)  # Give it time to research
+                print("\n🔍 Research in progress...")
+                print("   📋 Planning searches")
+                print("   🌐 Gathering information from sources")
+                print("   ✍️  Compiling report")
+                print("   ⏳ Please wait...")
+                # Break the interactive loop to wait for the final result
+                break
 
+            # Workflow is already done, break to get the result
             elif status.status == "completed":
-                print(f"\n🎉 Research completed!")
-                result = await handle.result()
-                print(f"\n📄 Research Result:")
-                print("=" * 60)
-                print(result)
-                return result
+                break
 
             elif status.status == "pending":
                 print("⏳ Starting research...")
                 await asyncio.sleep(2)
 
             else:
-                print(f"📊 Status: {status.status}")
+                print(f"📊 Unexpected Status: {status.status}, waiting...")
                 await asyncio.sleep(2)
 
         except Exception as e:
             print(f"❌ Error during interaction: {e}")
+            # If the workflow fails or is cancelled during interaction, we should exit
+            desc = await handle.describe()
+            if desc.status not in ("RUNNING", "CONTINUED_AS_NEW"):
+                 print(f"Workflow has terminated with status: {desc.status}")
+                 return
             await asyncio.sleep(2)
+
+    # After breaking the loop, we wait for the final result.
+    # This call will block until the workflow is complete.
+    result = await handle.result()
+
+    # Now that the wait is over, print the completion message and result.
+    print(f"\n🎉 Research completed!")
+    print(f"\n📄 Research Result:")
+    print("=" * 60)
+    print(result)
+    return result
 
 
 # Keep the old function for backward compatibility

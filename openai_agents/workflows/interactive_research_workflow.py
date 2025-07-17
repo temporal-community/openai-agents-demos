@@ -1,6 +1,8 @@
 from temporalio import workflow
 
-from openai_agents.workflows.research_agents.research_manager import InteractiveResearchManager
+from openai_agents.workflows.research_agents.research_manager import (
+    InteractiveResearchManager,
+)
 from openai_agents.workflows.research_agents.research_models import (
     ClarificationInput,
     ResearchInteraction,
@@ -12,7 +14,7 @@ from openai_agents.workflows.research_agents.research_models import (
 
 @workflow.defn
 class InteractiveResearchWorkflow:
-    def __init__(self):
+    def __init__(self) -> None:
         self.research_manager = InteractiveResearchManager()
         self.current_interaction: ResearchInteraction | None = None
         self._end_workflow = False
@@ -34,27 +36,35 @@ class InteractiveResearchWorkflow:
                 initial_query, use_clarifications=False
             )
 
-        # Long-running workflow - wait for termination or completion like wealth management
+        # Wait for user to start the research via an update and for clarifications to be collected.
+        # The workflow will pause here until the status is 'researching' or 'completed'.
         await workflow.wait_condition(
-            lambda: bool(
-                self._end_workflow
-                or (
-                    self.current_interaction
-                    and self.current_interaction.status == "completed"
-                )
+            lambda: self._end_workflow
+            or (
+                self.current_interaction is not None
+                and self.current_interaction.status in ["researching", "completed"]
             )
         )
 
+        # If the workflow was signaled to end, exit gracefully.
         if self._end_workflow:
             return "Research workflow ended by user"
 
+        # If we are now in the 'researching' state, perform the long-running work.
+        if (
+            self.current_interaction
+            and self.current_interaction.status == "researching"
+        ):
+            await self._complete_research_with_clarifications()
+
+        # At this point, the workflow is complete, so we return the final result.
         return (
             self.current_interaction.final_result or "No research completed"
             if self.current_interaction
             else "No research completed"
         )
 
-    async def _start_interactive_research(self, query: str):
+    async def _start_interactive_research(self, query: str) -> None:
         """Start interactive research with clarifying questions"""
         self.current_interaction = ResearchInteraction(
             original_query=query, status="pending"
@@ -67,11 +77,15 @@ class InteractiveResearchWorkflow:
             self.current_interaction.clarification_questions = result.questions
             self.current_interaction.status = "awaiting_clarifications"
         else:
-            # No clarifications needed, proceed directly to research
+            # No clarifications needed, set status to researching first
+            self.current_interaction.status = "researching"
+            # Give UI time to show the researching status
+            await workflow.sleep(0.1)
+            # The research result should already be complete from the manager
             self.current_interaction.final_result = result.research_output
             self.current_interaction.status = "completed"
 
-    async def _complete_research_with_clarifications(self):
+    async def _complete_research_with_clarifications(self) -> None:
         """Complete research using collected clarifications"""
         if (
             not self.current_interaction
@@ -79,8 +93,7 @@ class InteractiveResearchWorkflow:
         ):
             return
 
-        self.current_interaction.status = "researching"
-
+        # NOTE: The status is already 'researching'. This method now only does the work.
         questions = self.current_interaction.clarification_questions or []
         responses = self.current_interaction.clarification_responses or {}
 
@@ -130,8 +143,9 @@ class InteractiveResearchWorkflow:
         has_more = self.current_interaction.answer_current_question(input.answer)
 
         if not has_more:
-            # All questions answered, proceed with research
-            await self._complete_research_with_clarifications()
+            # All questions answered. Set status to 'researching' and return immediately.
+            # The main run() method will detect this change and execute the research.
+            self.current_interaction.status = "researching"
 
         return self.current_interaction
 
@@ -154,8 +168,8 @@ class InteractiveResearchWorkflow:
             self.current_interaction.clarification_questions or []
         )
 
-        # Proceed with research
-        await self._complete_research_with_clarifications()
+        # Set status to researching and let the run method handle it
+        self.current_interaction.status = "researching"
 
         return self.current_interaction
 
@@ -170,6 +184,6 @@ class InteractiveResearchWorkflow:
             raise ValueError("Clarification responses cannot be empty")
 
     @workflow.signal
-    async def end_workflow_signal(self):
+    async def end_workflow_signal(self) -> None:
         """Signal to end the workflow"""
         self._end_workflow = True

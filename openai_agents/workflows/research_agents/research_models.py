@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from openai_agents.workflows.research_agents.writer_agent import ReportData
 
 
 class ClarificationInput(BaseModel):
@@ -41,6 +44,7 @@ class ResearchInteraction:
     current_question_index: int = 0
     enriched_query: Optional[str] = None
     final_result: Optional[str] = None
+    report_data: Optional[ReportData] = None  # Will hold ReportData object
     status: str = "pending"  # pending, awaiting_clarifications, collecting_answers, researching, completed
 
     def get_current_question(self) -> Optional[str]:

@@ -126,3 +126,7 @@ uv.lock
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# PDF Output
+pdf_output/
+*.pdf

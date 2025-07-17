@@ -13,6 +13,7 @@ from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.worker import Worker
 
 from openai_agents.workflows.get_weather_activity import get_weather
+from openai_agents.workflows.pdf_generation_activity import generate_pdf
 from openai_agents.workflows.hello_world_workflow import HelloWorldAgent
 from openai_agents.workflows.interactive_research_workflow import (
     InteractiveResearchWorkflow,
@@ -45,6 +46,7 @@ async def main():
             activities=[
                 ModelActivity().invoke_model_activity,
                 get_weather,
+                generate_pdf,
             ],
         )
         await worker.run()

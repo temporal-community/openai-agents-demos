@@ -11,6 +11,8 @@ dependencies = [
     "openai-agents>=0.0.19",
     "temporalio[openai-agents]>=1.14.1",
     "pydantic>=2.10.6,<3",
+    "weasyprint>=61.0.0",
+    "markdown>=3.4.0",
 ]
 
 [project.urls]

@@ -1,4 +1,5 @@
 from temporalio import workflow
+from dataclasses import dataclass
 
 from openai_agents.workflows.research_agents.research_manager import (
     InteractiveResearchManager,
@@ -6,10 +7,18 @@ from openai_agents.workflows.research_agents.research_manager import (
 from openai_agents.workflows.research_agents.research_models import (
     ClarificationInput,
     ResearchInteraction,
-    ResearchStatusInput,
     SingleClarificationInput,
     UserQueryInput,
 )
+
+
+@dataclass
+class InteractiveResearchResult:
+    """Result from interactive research workflow including both markdown and PDF"""
+    short_summary: str
+    markdown_report: str
+    follow_up_questions: list[str]
+    pdf_file_path: str | None = None
 
 
 @workflow.defn
@@ -22,7 +31,7 @@ class InteractiveResearchWorkflow:
     @workflow.run
     async def run(
         self, initial_query: str | None = None, use_clarifications: bool = False
-    ) -> str:
+    ) -> InteractiveResearchResult:
         """
         Run research workflow - long-running interactive workflow with clarifying questions
 
@@ -32,8 +41,13 @@ class InteractiveResearchWorkflow:
         """
         if initial_query and not use_clarifications:
             # Simple direct research mode - backward compatibility
-            return await self.research_manager.run(
-                initial_query, use_clarifications=False
+            report_data = await self.research_manager._run_direct(initial_query)
+            pdf_file_path = await self.research_manager._generate_pdf_report(report_data)
+            return InteractiveResearchResult(
+                short_summary=report_data.short_summary,
+                markdown_report=report_data.markdown_report,
+                follow_up_questions=report_data.follow_up_questions,
+                pdf_file_path=pdf_file_path
             )
 
         # Wait for user to start the research via an update and for clarifications to be collected.
@@ -48,7 +62,12 @@ class InteractiveResearchWorkflow:
 
         # If the workflow was signaled to end, exit gracefully.
         if self._end_workflow:
-            return "Research workflow ended by user"
+            return InteractiveResearchResult(
+                short_summary="Research ended by user",
+                markdown_report="Research workflow ended by user",
+                follow_up_questions=[],
+                pdf_file_path=None
+            )
 
         # If we are now in the 'researching' state, perform the long-running work.
         if (
@@ -58,11 +77,25 @@ class InteractiveResearchWorkflow:
             await self._complete_research_with_clarifications()
 
         # At this point, the workflow is complete, so we return the final result.
-        return (
-            self.current_interaction.final_result or "No research completed"
-            if self.current_interaction
-            else "No research completed"
-        )
+        if self.current_interaction and self.current_interaction.report_data:
+            # Generate PDF if we have report data
+            pdf_file_path = await self.research_manager._generate_pdf_report(self.current_interaction.report_data)
+            return InteractiveResearchResult(
+                short_summary=self.current_interaction.report_data.short_summary,
+                markdown_report=self.current_interaction.report_data.markdown_report,
+                follow_up_questions=self.current_interaction.report_data.follow_up_questions,
+                pdf_file_path=pdf_file_path
+            )
+        else:
+            final_result = "No research completed"
+            if self.current_interaction and self.current_interaction.final_result:
+                final_result = self.current_interaction.final_result
+            return InteractiveResearchResult(
+                short_summary="No research completed",
+                markdown_report=final_result,
+                follow_up_questions=[],
+                pdf_file_path=None
+            )
 
     async def _start_interactive_research(self, query: str) -> None:
         """Start interactive research with clarifying questions"""
@@ -83,6 +116,7 @@ class InteractiveResearchWorkflow:
             await workflow.sleep(0.1)
             # The research result should already be complete from the manager
             self.current_interaction.final_result = result.research_output
+            self.current_interaction.report_data = result.report_data
             self.current_interaction.status = "completed"
 
     async def _complete_research_with_clarifications(self) -> None:
@@ -98,11 +132,12 @@ class InteractiveResearchWorkflow:
         responses = self.current_interaction.clarification_responses or {}
 
         # Continue with research using clarifications
-        final_result = await self.research_manager.run_with_clarifications_complete(
+        report_data = await self.research_manager.run_with_clarifications_complete(
             self.current_interaction.original_query, questions, responses
         )
 
-        self.current_interaction.final_result = final_result
+        self.current_interaction.final_result = report_data.markdown_report
+        self.current_interaction.report_data = report_data
         self.current_interaction.status = "completed"
 
     @workflow.query

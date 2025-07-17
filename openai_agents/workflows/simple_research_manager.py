@@ -17,6 +17,9 @@ with workflow.unsafe.imports_passed_through():
         ReportData,
         new_writer_agent,
     )
+    from openai_agents.workflows.research_agents.pdf_generator_agent import (
+        new_pdf_generator_agent,
+    )
 
 
 class SimpleResearchManager:
@@ -25,6 +28,7 @@ class SimpleResearchManager:
         self.search_agent = new_search_agent()
         self.planner_agent = new_planner_agent()
         self.writer_agent = new_writer_agent()
+        self.pdf_generator_agent = new_pdf_generator_agent()
 
     async def run(self, query: str) -> str:
         trace_id = gen_trace_id()
@@ -71,10 +75,30 @@ class SimpleResearchManager:
 
     async def _write_report(self, query: str, search_results: list[str]) -> ReportData:
         input_str = f"Original query: {query}\nSummarized search results: {search_results}"
-        result = await Runner.run(
+        
+        # Generate markdown report
+        markdown_result = await Runner.run(
             self.writer_agent,
             input_str,
             run_config=self.run_config,
         )
-
-        return result.final_output_as(ReportData)
+        
+        report_data = markdown_result.final_output_as(ReportData)
+        return report_data
+    
+    async def _generate_pdf_report(self, report_data: ReportData) -> str | None:
+        """Generate PDF from markdown report, return file path"""
+        try:
+            pdf_result = await Runner.run(
+                self.pdf_generator_agent,
+                f"Convert this markdown report to PDF:\n\n{report_data.markdown_report}",
+                run_config=self.run_config,
+            )
+            
+            pdf_output = pdf_result.final_output_as(type(pdf_result.final_output))
+            if pdf_output.success:
+                return pdf_output.pdf_file_path
+        except Exception:
+            # If PDF generation fails, return None
+            pass
+        return None

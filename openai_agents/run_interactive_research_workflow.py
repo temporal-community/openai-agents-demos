@@ -1,9 +1,9 @@
 import argparse
 import asyncio
-import sys
 from typing import Dict, List
+from pathlib import Path
 
-from temporalio.client import Client, WorkflowHandle
+from temporalio.client import Client
 from temporalio.contrib.pydantic import pydantic_data_converter
 
 from openai_agents.workflows.interactive_research_workflow import (
@@ -11,7 +11,6 @@ from openai_agents.workflows.interactive_research_workflow import (
 )
 from openai_agents.workflows.research_agents.research_models import (
     ClarificationInput,
-    ResearchInteraction,
     SingleClarificationInput,
     UserQueryInput,
 )
@@ -145,11 +144,46 @@ async def run_interactive_research_with_clarifications(
     # This call will block until the workflow is complete.
     result = await handle.result()
 
+    # The result now contains all the data we need
+    
     # Now that the wait is over, print the completion message and result.
     print(f"\n🎉 Research completed!")
+    
+    # Save markdown report
+    markdown_file = Path("interactive_research_report.md")
+    markdown_file.write_text(result.markdown_report)
+    print(f"📄 Markdown report saved to: {markdown_file}")
+    
+    # Save PDF report if available
+    if result.pdf_file_path:
+        import shutil
+        # Create pdf_output directory if it doesn't exist
+        pdf_output_dir = Path("pdf_output")
+        pdf_output_dir.mkdir(exist_ok=True)
+        
+        # Copy to both the pdf_output directory and current directory
+        pdf_file = Path("interactive_research_report.pdf")
+        shutil.copy2(result.pdf_file_path, pdf_file)
+        
+        # Also copy to pdf_output with original name
+        final_pdf = pdf_output_dir / "interactive_research_report.pdf"
+        shutil.copy2(result.pdf_file_path, final_pdf)
+        
+        print(f"📑 PDF report saved to: {pdf_file}")
+        print(f"📑 PDF also saved to: {final_pdf}")
+    else:
+        print(f"⚠️  PDF generation not available (continuing with markdown only)")
+    
+    # Show summary and follow-up questions if available
+    print(f"\n📋 Summary: {result.short_summary}")
+    
+    print(f"\n🔍 Follow-up questions:")
+    for i, question in enumerate(result.follow_up_questions, 1):
+        print(f"   {i}. {question}")
+    
     print(f"\n📄 Research Result:")
     print("=" * 60)
-    print(result)
+    print(result.markdown_report)
     return result
 
 

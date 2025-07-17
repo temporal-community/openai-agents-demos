@@ -18,9 +18,9 @@ with workflow.unsafe.imports_passed_through():
     )
 
     from openai_agents.workflows.research_agents.clarifying_agent import Clarifications
-    from openai_agents.workflows.research_agents.instruction_agent import (
-        new_instruction_agent,
-    )
+    # from openai_agents.workflows.research_agents.instruction_agent import (
+    #     new_instruction_agent,
+    # )
     from openai_agents.workflows.research_agents.planner_agent import (
         WebSearchItem,
         WebSearchPlan,
@@ -32,6 +32,9 @@ with workflow.unsafe.imports_passed_through():
         ReportData,
         new_writer_agent,
     )
+    from openai_agents.workflows.research_agents.pdf_generator_agent import (
+        new_pdf_generator_agent,
+    )
 
 
 @dataclass
@@ -41,6 +44,7 @@ class ClarificationResult:
     needs_clarifications: bool
     questions: Optional[List[str]] = None
     research_output: Optional[str] = None
+    report_data: Optional[ReportData] = None
 
 
 class InteractiveResearchManager:
@@ -50,6 +54,7 @@ class InteractiveResearchManager:
         self.planner_agent = new_planner_agent()
         self.writer_agent = new_writer_agent()
         self.triage_agent = new_triage_agent()
+        self.pdf_generator_agent = new_pdf_generator_agent()
 
     async def run(self, query: str, use_clarifications: bool = False) -> str:
         """
@@ -61,11 +66,13 @@ class InteractiveResearchManager:
         """
         if use_clarifications:
             # This method is for backwards compatibility, just use direct flow
-            return await self._run_direct(query)
+            report = await self._run_direct(query)
+            return report.markdown_report
         else:
-            return await self._run_direct(query)
+            report = await self._run_direct(query)
+            return report.markdown_report
 
-    async def _run_direct(self, query: str) -> str:
+    async def _run_direct(self, query: str) -> ReportData:
         """Original direct research flow"""
         trace_id = gen_trace_id()
         with trace("Research trace", trace_id=trace_id):
@@ -73,7 +80,7 @@ class InteractiveResearchManager:
             search_results = await self._perform_searches(search_plan)
             report = await self._write_report(query, search_results)
 
-        return report.markdown_report
+        return report
 
     async def run_with_clarifications_start(self, query: str) -> ClarificationResult:
         """Start clarification flow and return whether clarifications are needed"""
@@ -98,14 +105,18 @@ class InteractiveResearchManager:
                 # The triage agent routed to instruction agent, which should then 
                 # continue through planner -> search -> writer automatically
                 # Let's run the direct research flow since no clarifications are needed
-                research_output = await self._run_direct(query)
+                search_plan = await self._plan_searches(query)
+                search_results = await self._perform_searches(search_plan)
+                report = await self._write_report(query, search_results)
                 return ClarificationResult(
-                    needs_clarifications=False, research_output=research_output
+                    needs_clarifications=False, 
+                    research_output=report.markdown_report,
+                    report_data=report
                 )
 
     async def run_with_clarifications_complete(
         self, original_query: str, questions: List[str], responses: Dict[str, str]
-    ) -> str:
+    ) -> ReportData:
         """Complete research using clarification responses"""
         trace_id = gen_trace_id()
         with trace("Enhanced Research with clarifications", trace_id=trace_id):
@@ -118,7 +129,7 @@ class InteractiveResearchManager:
             search_results = await self._perform_searches(search_plan)
             report = await self._write_report(enriched_query, search_results)
 
-            return report.markdown_report
+            return report
 
     def _extract_clarifications(self, result) -> Optional[Clarifications]:
         """Extract clarifications from agent result if present"""
@@ -203,10 +214,30 @@ class InteractiveResearchManager:
         input_str: str = (
             f"Original query: {query}\nSummarized search results: {search_results}"
         )
-        result = await Runner.run(
+        
+        # Generate markdown report
+        markdown_result = await Runner.run(
             self.writer_agent,
             input_str,
             run_config=self.run_config,
         )
-
-        return result.final_output_as(ReportData)
+        
+        report_data = markdown_result.final_output_as(ReportData)
+        return report_data
+    
+    async def _generate_pdf_report(self, report_data: ReportData) -> str | None:
+        """Generate PDF from markdown report, return file path"""
+        try:
+            pdf_result = await Runner.run(
+                self.pdf_generator_agent,
+                f"Convert this markdown report to PDF:\n\n{report_data.markdown_report}",
+                run_config=self.run_config,
+            )
+            
+            pdf_output = pdf_result.final_output_as(type(pdf_result.final_output))
+            if pdf_output.success:
+                return pdf_output.pdf_file_path
+        except Exception:
+            # If PDF generation fails, return None
+            pass
+        return None

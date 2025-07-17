@@ -17,10 +17,10 @@ from openai_agents.workflows.research_agents.research_models import (
 )
 
 
-async def run_interactive_research_wealth_pattern(
+async def run_interactive_research_with_clarifications(
     client: Client, query: str, workflow_id: str
 ):
-    """Run interactive research following the wealth management pattern"""
+    """Run interactive research with clarifying questions"""
     print(f"🤖 Starting interactive research: {query}")
 
     # Check if workflow exists and is running
@@ -156,7 +156,7 @@ async def run_interactive_research_wealth_pattern(
 # Keep the old function for backward compatibility
 async def run_interactive_research(client: Client, query: str, workflow_id: str):
     """Legacy interactive research - redirects to new pattern"""
-    return await run_interactive_research_wealth_pattern(client, query, workflow_id)
+    return await run_interactive_research_with_clarifications(client, query, workflow_id)
 
 
 async def get_workflow_status(client: Client, workflow_id: str):

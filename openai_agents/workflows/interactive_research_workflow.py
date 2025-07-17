@@ -24,7 +24,7 @@ class InteractiveResearchWorkflow:
         self, initial_query: str | None = None, use_clarifications: bool = False
     ) -> str:
         """
-        Run research workflow - long-running interactive workflow following wealth management pattern
+        Run research workflow - long-running interactive workflow with clarifying questions
 
         Args:
             initial_query: Optional initial research query (for backward compatibility)

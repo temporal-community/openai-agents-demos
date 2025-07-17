@@ -47,20 +47,27 @@ User Query → Planner Agent → Search Agent(s) → Writer Agent → Final Repo
 ## Interactive Research Flow
 
 ```
-User Query → Triage Agent → Decision
-             (gpt-4o-mini)     ↓
-                        Clarification Needed?
-                               ↓
-           ┌─── Yes: Clarifying Agent → Questions → User Input
-           │        (gpt-4o-mini)         ↓
-           │                     Instruction Agent → Enriched Query
-           │                     (gpt-4o-mini)        ↓
-           └─── No: Instruction Agent → Direct Research
-                    (gpt-4o-mini)           ↓
-                                    Planner Agent → Search Agent(s) → Writer Agent
-                                    (gpt-4o)        (parallel)       (gpt-4o)
-                                           ↓
-                                    Final Report
+User Query
+    └──→ Triage Agent (gpt-4o-mini)
+              └──→ Decision: Clarification Needed?
+                            │
+                ├── Yes → Clarifying Agent (gpt-4o-mini)
+                │             └──→ Generate Questions
+                │                          └──→ User Input
+                │                                     └──→ Instruction Agent (gpt-4o-mini)
+                │                                                   └──→ Enriched Query
+                │                                                             │
+                │                                                             └──→ Planner Agent (gpt-4o)
+                │                                                                          ├──→ Search Agent(s) (parallel)
+                │                                                                          └──→ Writer Agent (gpt-4o)
+                │                                                                                     └──→ Final Report
+                │
+                └── No → Instruction Agent (gpt-4o-mini)
+                               └──→ Direct Research
+                                          └──→ Planner Agent (gpt-4o)
+                                                       ├──→ Search Agent(s) (parallel)
+                                                       └──→ Writer Agent (gpt-4o)
+                                                                     └──→ Final Report
 ```
 
 ### Agent Roles in Interactive Flow:

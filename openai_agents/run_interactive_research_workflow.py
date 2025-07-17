@@ -154,23 +154,9 @@ async def run_interactive_research_with_clarifications(
     markdown_file.write_text(result.markdown_report)
     print(f"📄 Markdown report saved to: {markdown_file}")
     
-    # Save PDF report if available
+    # PDF report already saved by workflow
     if result.pdf_file_path:
-        import shutil
-        # Create pdf_output directory if it doesn't exist
-        pdf_output_dir = Path("pdf_output")
-        pdf_output_dir.mkdir(exist_ok=True)
-        
-        # Copy to both the pdf_output directory and current directory
-        pdf_file = Path("interactive_research_report.pdf")
-        shutil.copy2(result.pdf_file_path, pdf_file)
-        
-        # Also copy to pdf_output with original name
-        final_pdf = pdf_output_dir / "interactive_research_report.pdf"
-        shutil.copy2(result.pdf_file_path, final_pdf)
-        
-        print(f"📑 PDF report saved to: {pdf_file}")
-        print(f"📑 PDF also saved to: {final_pdf}")
+        print(f"📑 PDF report saved to: {result.pdf_file_path}")
     else:
         print(f"⚠️  PDF generation not available (continuing with markdown only)")
     

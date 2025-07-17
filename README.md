@@ -2,6 +2,8 @@
 
 This repository contains four standalone demos showcasing the OpenAI Agents Python SDK integrated with Temporal's durable execution.
 
+For detailed information about the research agents in this repo, see [openai_agents/workflows/research_agents/README.md](openai_agents/workflows/research_agents/README.md)
+
 ## Prerequisites
 
 1. **Python 3.10+** - Required for the demos

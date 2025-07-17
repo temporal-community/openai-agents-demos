@@ -1,162 +1,141 @@
-# Enhanced Research Workflow with Clarifying Questions
+# Research Agent Components
 
-This enhanced research workflow implements a multi-agent system that can ask clarifying questions before conducting deep research, based on the patterns from the [OpenAI Deep Research API cookbook](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api_agents).
+This directory contains shared agent components used by two distinct research workflows in this demo project. The agents demonstrate different patterns of orchestration, from simple linear execution to complex multi-agent interactions with user clarifications.
 
-## Architecture
+## Two Research Workflows
 
-### Agent Flow
+This project includes two research workflows that showcase different levels of complexity:
+
+### Basic Research Workflow
+- **File**: `../research_bot_workflow.py`
+- **Manager**: `../simple_research_manager.py` (SimpleResearchManager)
+- **Purpose**: Demonstrates simple agent orchestration in a linear pipeline
+- **Usage**: `uv run openai_agents/run_research_workflow.py "your research query"`
+
+### Interactive Research Workflow  
+- **File**: `../interactive_research_workflow.py`
+- **Manager**: `research_manager.py` (InteractiveResearchManager)
+- **Purpose**: Advanced workflow with intelligent question generation and user interaction
+- **Usage**: `uv run openai_agents/run_interactive_research_workflow.py "your research query"`
+
+The interactive workflow is based on patterns from the [OpenAI Deep Research API cookbook](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api_agents).
+
+## Basic Research Flow
+
+```
+User Query → Planner Agent → Search Agent(s) → Writer Agent → Final Report
+              (gpt-4o)        (parallel)       (gpt-4o)
+```
+
+### Agent Roles in Basic Flow:
+
+**Planner Agent** (`planner_agent.py`)
+- Analyzes the user query and generates 5-20 strategic web search terms
+- Uses GPT-4o for comprehensive search planning
+- Outputs structured `WebSearchPlan` with search terms and reasoning
+
+**Search Agent** (`search_agent.py`) 
+- Executes multiple web searches in parallel using the search plan
+- Each search includes the query term and reasoning for context
+- Handles search failures gracefully and returns consolidated results
+
+**Writer Agent** (`writer_agent.py`)
+- Compiles all search results into a comprehensive markdown report
+- Synthesizes information from multiple sources
+- Structures the final output as a cohesive research document
+
+## Interactive Research Flow
 
 ```
 User Query → Triage Agent → Decision
-                    ↓
-            Clarification Needed?
-                    ↓
-        ┌─── Yes: Clarifying Agent → Questions → User Input
-        │                    ↓
-        │            Instruction Agent → Enriched Query
-        │                    ↓
-        └─── No: Instruction Agent → Direct Research
-                            ↓
-                    Planner Agent → Search Agent → Writer Agent
-                            ↓
-                    Research Result
+             (gpt-4o-mini)     ↓
+                        Clarification Needed?
+                               ↓
+           ┌─── Yes: Clarifying Agent → Questions → User Input
+           │        (gpt-4o-mini)         ↓
+           │                     Instruction Agent → Enriched Query
+           │                     (gpt-4o-mini)        ↓
+           └─── No: Instruction Agent → Direct Research
+                    (gpt-4o-mini)           ↓
+                                    Planner Agent → Search Agent(s) → Writer Agent
+                                    (gpt-4o)        (parallel)       (gpt-4o)
+                                           ↓
+                                    Final Report
 ```
 
-### Key Components
+### Agent Roles in Interactive Flow:
 
-1. **TriageAgent** (`triage_agent.py`)
-   - Uses `gpt-4o-mini` for fast decisions
-   - Routes to clarifying or instruction agent based on query completeness
+**Triage Agent** (`triage_agent.py`)
+- Analyzes query specificity and determines if clarifications are needed
+- Routes to either clarifying questions or direct research
+- Uses GPT-4o-mini for fast, cost-effective decision making
+- Looks for vague terms, missing context, or broad requests
 
-2. **ClarifyingAgent** (`clarifying_agent.py`)
-   - Generates 2-3 smart clarifying questions
-   - Uses structured output (Pydantic `Clarifications` model)
-   - Triggers Temporal workflow update for user interaction
+**Clarifying Agent** (`clarifying_agent.py`)  
+- Generates 2-3 targeted questions to gather missing information
+- Focuses on preferences, constraints, and specific requirements
+- Uses structured output (`Clarifications` model) for consistent formatting
+- Triggers Temporal workflow updates for user interaction
 
-3. **InstructionAgent** (`instruction_agent.py`)
-   - Enriches user query with clarification responses
-   - Optimizes prompt for deep research model
-   - Hands off to existing research pipeline
+**Instruction Agent** (`instruction_agent.py`)
+- Enriches the original query with user responses to clarifying questions
+- Optimizes the enhanced query for the research pipeline
+- Processes specific queries that don't need clarifications
+- Prepares refined input for the planner agent
 
-4. **InteractiveResearchManager** (`research_manager.py`)
-   - Enhanced to support both direct and interactive flows
-   - Manages agent orchestration and state
-   - Integrates with Temporal workflow updates
+**Planner Agent** - Same as basic flow
+**Search Agent** - Same as basic flow  
+**Writer Agent** - Same as basic flow
 
-5. **ResearchWorkflow** (`research_bot_workflow.py`)
-   - Temporal workflow with interactive capabilities
-   - Supports workflow updates for clarification responses
-   - Maintains research state throughout interaction
+## Shared Agent Components
 
-## Usage
+All agents in this directory are used by one or both research workflows:
 
-### Prerequisites
+- **`planner_agent.py`** - Web search planning (used by both workflows)
+- **`search_agent.py`** - Web search execution (used by both workflows)
+- **`writer_agent.py`** - Report generation (used by both workflows)
+- **`triage_agent.py`** - Query analysis and routing (interactive workflow only)
+- **`clarifying_agent.py`** - Question generation (interactive workflow only)
+- **`instruction_agent.py`** - Query enrichment (interactive workflow only)
+- **`research_models.py`** - Pydantic models for workflow state (interactive workflow only)
+- **`research_manager.py`** - InteractiveResearchManager orchestration
 
-Before running any workflows, you need to start the Temporal worker:
+## Usage Examples
 
+### Running Basic Research
 ```bash
-# Start the worker in the background
-python openai_agents/run_worker.py &
-WORKER_PID=$!
-echo "Worker started with PID: $WORKER_PID"
+# Start worker first
+uv run openai_agents/run_worker.py &
 
-# Wait for worker initialization
-sleep 5
+# Run basic research
+uv run openai_agents/run_research_workflow.py "Best sustainable energy solutions for small businesses"
 ```
 
-**Important**: The worker must be running for workflows to execute. Keep it running in a separate terminal or background process.
-
-### Basic Research (Original Flow)
+### Running Interactive Research
 ```bash
-python openai_agents/run_research_workflow.py "Caribbean vacation spots in April"
+# Start worker first  
+uv run openai_agents/run_worker.py &
+
+# Run interactive research
+uv run openai_agents/run_interactive_research_workflow.py "Travel recommendations for Japan"
 ```
 
-### Interactive Research (With Clarifying Questions)
-```bash
-python openai_agents/run_research_workflow.py "Inner-north Melbourne food and drink spots" --interactive
-```
-
-**New Interactive Experience:**
-- Session stays open throughout the research process
-- Questions are presented one at a time for natural conversation
-- Type answers and press Enter to continue
-- Type "exit", "quit", "end", or "done" to terminate early
-- Workflow continues running until research is complete
-
-### Check Workflow Status
-```bash
-python openai_agents/run_research_workflow.py --status --workflow-id research-workflow
-```
-
-### Send Clarifications to Running Workflow
-```bash
-python openai_agents/run_research_workflow.py --clarify question_0="Under $1000" question_1="March 2024"
-```
-
-### Interactive Mode
-```bash
-python openai_agents/run_research_workflow.py
-# Will prompt for query and mode selection
-```
+The interactive workflow will ask clarifying questions like:
+- What's your budget range?
+- When are you planning to travel?
+- What type of activities interest you most?
+- Any dietary restrictions or accessibility needs?
 
 ## Model Configuration
 
-- **Triage & Clarifying Agents**: `gpt-4o-mini` (fast, cost-effective)
-- **Instruction Agent**: `gpt-4o-mini` (prompt optimization)
-- **Research Pipeline**: Uses existing agents (planner, search, writer)
+**Cost-Optimized Models:**
+- **Triage Agent**: `gpt-4o-mini` - Fast routing decisions
+- **Clarifying Agent**: `gpt-4o-mini` - Question generation  
+- **Instruction Agent**: `gpt-4o-mini` - Query enrichment
 
-## Temporal Integration
+**Research Models:**
+- **Planner Agent**: `gpt-4o` - Complex search strategy
+- **Search Agent**: Uses web search APIs (no LLM)
+- **Writer Agent**: `gpt-4o` - High-quality report synthesis
 
-The workflow uses Temporal's workflow updates to handle interactive clarifications:
-
-- **Query**: `get_status()` - Get current research status
-- **Update**: `provide_clarifications()` - Send clarification responses
-- **Signal**: `end_workflow()` - End the workflow
-
-## Testing
-
-Run the test suite to validate the implementation:
-
-```bash
-python openai_agents/test_enhanced_research.py
-```
-
-For usage instructions:
-```bash
-python openai_agents/test_enhanced_research.py --usage
-```
-
-### Cleanup
-
-When finished, stop the worker:
-
-```bash
-# If you saved the PID earlier
-kill $WORKER_PID 2>/dev/null || true
-wait $WORKER_PID 2>/dev/null || true
-
-# Or kill all workers
-pkill -f "run_worker.py" || true
-```
-
-## Benefits
-
-1. **Smart Questions**: Non-research model generates targeted clarifying questions
-2. **Prompt Enrichment**: Enhanced context leads to better research quality
-3. **Temporal Native**: Leverages workflow updates for robust interaction handling
-4. **Backward Compatible**: Existing simple research flow remains available
-5. **Cost Effective**: Uses smaller models for clarification logic
-
-## Files Added/Modified
-
-- **New Files**:
-  - `clarifying_agent.py` - Clarifying questions agent
-  - `triage_agent.py` - Routing/decision agent  
-  - `instruction_agent.py` - Prompt enrichment agent
-  - `research_models.py` - Pydantic models for workflow
-  - `test_enhanced_research.py` - Test suite
-
-- **Modified Files**:
-  - `research_manager.py` - Enhanced with multi-agent flow
-  - `research_bot_workflow.py` - Added interactive capabilities
-  - `run_research_workflow.py` - Enhanced CLI with clarification support
+This configuration balances cost efficiency for routing/clarification logic while using more powerful models for core research tasks.

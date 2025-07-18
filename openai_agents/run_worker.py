@@ -6,6 +6,7 @@ import warnings
 from datetime import timedelta
 
 logging.getLogger("openai").setLevel(logging.ERROR)
+logging.getLogger("openai.agents").setLevel(logging.CRITICAL)
 
 from temporalio.client import Client
 from temporalio.contrib.openai_agents import (
@@ -27,6 +28,8 @@ from openai_agents.workflows.tools_workflow import ToolsWorkflow
 
 
 async def main():
+    logging.basicConfig(level=logging.INFO)
+    
     with set_open_ai_agent_temporal_overrides(
         model_params=ModelActivityParameters(
             start_to_close_timeout=timedelta(seconds=60),

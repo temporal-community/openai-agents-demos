@@ -37,7 +37,6 @@ async def main():
     print(f"   📋 Planning searches")
     print(f"   🌐 Gathering information")
     print(f"   ✍️  Compiling report")
-    print(f"   📑 Generating PDF")
     print(f"   ⏳ Please wait...")
 
     # Execute a workflow
@@ -53,13 +52,7 @@ async def main():
     # Save markdown report
     markdown_file = Path("research_report.md")
     markdown_file.write_text(result.markdown_report)
-    print(f"📄 Markdown report saved to: {markdown_file}")
-    
-    # PDF report already saved by workflow
-    if result.pdf_file_path:
-        print(f"📑 PDF report saved to: {result.pdf_file_path}")
-    else:
-        print(f"⚠️  PDF generation not available (continuing with markdown only)")
+    print(f"📄 Report saved to: {markdown_file}")
     
     print(f"\n📋 Summary: {result.short_summary}")
     

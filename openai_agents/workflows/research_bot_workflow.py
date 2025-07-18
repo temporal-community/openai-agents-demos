@@ -6,11 +6,10 @@ from openai_agents.workflows.simple_research_manager import SimpleResearchManage
 
 @dataclass
 class ResearchWorkflowResult:
-    """Result from research workflow including both markdown and PDF"""
+    """Result from research workflow with markdown report"""
     short_summary: str
     markdown_report: str
     follow_up_questions: list[str]
-    pdf_file_path: str | None = None
 
 
 @workflow.defn
@@ -23,12 +22,8 @@ class ResearchWorkflow:
         search_results = await manager._perform_searches(search_plan)
         report_data = await manager._write_report(query, search_results)
         
-        # Generate PDF separately
-        pdf_file_path = await manager._generate_pdf_report(report_data)
-        
         return ResearchWorkflowResult(
             short_summary=report_data.short_summary,
             markdown_report=report_data.markdown_report,
             follow_up_questions=report_data.follow_up_questions,
-            pdf_file_path=pdf_file_path
         )

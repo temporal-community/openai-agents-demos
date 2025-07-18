@@ -115,20 +115,18 @@ uv run openai_agents/run_tools_workflow.py
 
 ### Demo 3: Basic Research Workflow
 
-A research system that processes queries and generates comprehensive reports with optional PDF generation.
+A research system that processes queries and generates comprehensive markdown reports.
 
 **Files:**
 - `openai_agents/workflows/research_bot_workflow.py` - Main research workflow
-- `openai_agents/workflows/research_agents/` - All research agent components
+- `openai_agents/workflows/simple_research_manager.py` - Simple research orchestrator
+- `openai_agents/workflows/research_agents/` - Shared research agent components
 - `openai_agents/run_research_workflow.py` - Research client
-- `openai_agents/workflows/pdf_generation_activity.py` - PDF generation activity
-- `openai_agents/workflows/research_agents/pdf_generator_agent.py` - PDF generation agent
 
 **Agents:**
 - **Planner Agent**: Plans web searches based on the query
 - **Search Agent**: Performs searches to gather information
 - **Writer Agent**: Compiles the final research report
-- **PDF Generator Agent**: Converts markdown reports to professionally formatted PDFs
 
 **To run:**
 ```bash
@@ -137,9 +135,8 @@ uv run openai_agents/run_research_workflow.py "Tell me about quantum computing"
 
 **Output:**
 - `research_report.md` - Comprehensive markdown report
-- `pdf_output/research_report.pdf` - Professionally formatted PDF (if PDF generation is available)
 
-**Note:** The research workflow may take 2-3 minutes to complete due to web searches and report generation.
+**Note:** The research workflow may take 1-2 minutes to complete due to web searches and report generation.
 
 ### Demo 4: Multi-Agent Interactive Research Workflow
 
@@ -237,7 +234,7 @@ uv run pyright .
 - **Multi-Agent Systems**: The research demo showcases complex multi-agent coordination
 - **Interactive Workflows**: Research demo supports real-time user interaction
 - **Tool Integration**: Tools demo shows how to integrate external activities
-- **PDF Generation**: Research workflows generate professional PDF reports alongside markdown
+- **PDF Generation**: Interactive research workflow generates professional PDF reports alongside markdown
 
 ## License
 

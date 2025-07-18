@@ -23,7 +23,7 @@ The interactive workflow is based on patterns from the [OpenAI Deep Research API
 ## Basic Research Flow
 
 ```
-User Query → Planner Agent → Search Agent(s) → Writer Agent → Final Report
+User Query → Planner Agent → Search Agent(s) → Writer Agent → Markdown Report
               (gpt-4o)        (parallel)       (gpt-4o)
 ```
 
@@ -60,14 +60,16 @@ User Query
                 │                                                             └──→ Planner Agent (gpt-4o)
                 │                                                                          ├──→ Search Agent(s) (parallel)
                 │                                                                          └──→ Writer Agent (gpt-4o)
-                │                                                                                     └──→ Final Report
+                │                                                                                     └──→ PDF Generator Agent
+                │                                                                                                └──→ Report + PDF
                 │
                 └── No → Instruction Agent (gpt-4o-mini)
                                └──→ Direct Research
                                           └──→ Planner Agent (gpt-4o)
                                                        ├──→ Search Agent(s) (parallel)
                                                        └──→ Writer Agent (gpt-4o)
-                                                                     └──→ Final Report
+                                                                     └──→ PDF Generator Agent
+                                                                                └──→ Report + PDF
 ```
 
 ### Agent Roles in Interactive Flow:
@@ -93,6 +95,7 @@ User Query
 **Planner Agent** - Same as basic flow
 **Search Agent** - Same as basic flow  
 **Writer Agent** - Same as basic flow
+**PDF Generator Agent** (`pdf_generator_agent.py`) - Converts markdown reports to professionally formatted PDFs
 
 ## Shared Agent Components
 
@@ -101,6 +104,7 @@ All agents in this directory are used by one or both research workflows:
 - **`planner_agent.py`** - Web search planning (used by both workflows)
 - **`search_agent.py`** - Web search execution (used by both workflows)
 - **`writer_agent.py`** - Report generation (used by both workflows)
+- **`pdf_generator_agent.py`** - PDF generation (interactive workflow only)
 - **`triage_agent.py`** - Query analysis and routing (interactive workflow only)
 - **`clarifying_agent.py`** - Question generation (interactive workflow only)
 - **`instruction_agent.py`** - Query enrichment (interactive workflow only)
@@ -144,5 +148,6 @@ The interactive workflow will ask clarifying questions like:
 - **Planner Agent**: `gpt-4o` - Complex search strategy
 - **Search Agent**: Uses web search APIs (no LLM)
 - **Writer Agent**: `gpt-4o` - High-quality report synthesis
+- **PDF Generator Agent**: Uses WeasyPrint (no LLM) - Professional PDF formatting
 
 This configuration balances cost efficiency for routing/clarification logic while using more powerful models for core research tasks.

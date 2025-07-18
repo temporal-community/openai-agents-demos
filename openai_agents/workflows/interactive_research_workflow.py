@@ -110,21 +110,31 @@ class InteractiveResearchWorkflow:
             self.current_interaction.clarification_questions = result.questions
             self.current_interaction.status = "awaiting_clarifications"
         else:
-            # No clarifications needed, set status to researching first
-            self.current_interaction.status = "researching"
-            # Give UI time to show the researching status
-            await workflow.sleep(0.1)
-            # The research result should already be complete from the manager
-            self.current_interaction.final_result = result.research_output
-            self.current_interaction.report_data = result.report_data
-            self.current_interaction.status = "completed"
+            # No clarifications needed, store the research data and set status to researching
+            # The main run() method will handle the completion
+            if result.report_data is not None:
+                self.current_interaction.final_result = result.research_output
+                self.current_interaction.report_data = result.report_data
+                self.current_interaction.status = "researching"
+            else:
+                # Fallback if research failed
+                self.current_interaction.final_result = result.research_output or "Research failed to complete"
+                self.current_interaction.status = "completed"
 
     async def _complete_research_with_clarifications(self) -> None:
-        """Complete research using collected clarifications"""
-        if (
-            not self.current_interaction
-            or not self.current_interaction.clarification_responses
-        ):
+        """Complete research using collected clarifications or finalize direct research"""
+        if not self.current_interaction:
+            return
+
+        # Check if this is direct research (no clarifications) and research is already complete
+        if (not self.current_interaction.clarification_responses and 
+            self.current_interaction.report_data is not None):
+            # Direct research is already complete, just update status
+            self.current_interaction.status = "completed"
+            return
+
+        # This is clarification-based research - continue with original logic
+        if not self.current_interaction.clarification_responses:
             return
 
         # NOTE: The status is already 'researching'. This method now only does the work.

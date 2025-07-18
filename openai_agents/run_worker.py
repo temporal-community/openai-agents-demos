@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import warnings
 from datetime import timedelta
+
+logging.getLogger("openai").setLevel(logging.ERROR)
 
 from temporalio.client import Client
 from temporalio.contrib.openai_agents import (

@@ -32,7 +32,13 @@ async def run_interactive_research_with_clarifications(
 
         try:
             status = await handle.query(InteractiveResearchWorkflow.get_status)
-            if status and status.status not in ["completed", "failed", "timed_out", "terminated", "canceled"]:
+            if status and status.status not in [
+                "completed",
+                "failed",
+                "timed_out",
+                "terminated",
+                "canceled",
+            ]:
                 print("Found existing running workflow, using it...")
                 start_new = False
             else:
@@ -45,19 +51,32 @@ async def run_interactive_research_with_clarifications(
 
     if start_new:
         import time
+
         unique_id = f"{workflow_id}-{int(time.time())}"
         print(f"Starting new research workflow: {unique_id}")
 
-        try:
-            handle = await client.start_workflow(
-                InteractiveResearchWorkflow.run,
-                args=[None, False],
-                id=unique_id,
-                task_queue="openai-agents-task-queue",
-            )
-        except Exception as start_error:
-            print(f"❌ Failed to start workflow: {start_error}")
-            raise
+        # Start workflow with silent retry logic for network issues
+        handle = None
+        retry_timeout = 300  # 5 minutes total
+        start_time = asyncio.get_event_loop().time()
+
+        while True:
+            try:
+                handle = await client.start_workflow(
+                    InteractiveResearchWorkflow.run,
+                    args=[None, False],
+                    id=unique_id,
+                    task_queue="openai-agents-task-queue",
+                )
+                break  # Success, exit retry loop
+
+            except Exception:
+                # Check if we've exceeded the 5-minute timeout
+                elapsed_time = asyncio.get_event_loop().time() - start_time
+                if elapsed_time >= retry_timeout:
+                    return  # Exit silently after 5 minutes
+
+                await asyncio.sleep(5)
 
     if not handle:
         raise RuntimeError("Failed to get workflow handle")
@@ -97,8 +116,10 @@ async def run_interactive_research_with_clarifications(
 
                     if answer.lower() in ["exit", "quit", "end", "done"]:
                         print("Ending research session...")
-                        await handle.signal(InteractiveResearchWorkflow.end_workflow_signal)
-                        return # Exit the function entirely
+                        await handle.signal(
+                            InteractiveResearchWorkflow.end_workflow_signal
+                        )
+                        return  # Exit the function entirely
 
                     status = await handle.execute_update(
                         InteractiveResearchWorkflow.provide_single_clarification,
@@ -136,37 +157,55 @@ async def run_interactive_research_with_clarifications(
             # If the workflow fails or is cancelled during interaction, we should exit
             desc = await handle.describe()
             if desc.status not in ("RUNNING", "CONTINUED_AS_NEW"):
-                 print(f"Workflow has terminated with status: {desc.status}")
-                 return
+                print(f"Workflow has terminated with status: {desc.status}")
+                return
             await asyncio.sleep(2)
 
-    # After breaking the loop, we wait for the final result.
+    # After breaking the loop, we wait for the final result with silent retry logic
     # This call will block until the workflow is complete.
-    result = await handle.result()
+    result = None
+    retry_timeout = 300  # 5 minutes total
+    retry_delay = 2  # Start with 2 second delays
+    start_time = asyncio.get_event_loop().time()
+
+    while True:
+        try:
+            result = await handle.result()
+            break  # Success, exit retry loop
+
+        except Exception:
+            # Check if we've exceeded the 5-minute timeout
+            elapsed_time = asyncio.get_event_loop().time() - start_time
+            if elapsed_time >= retry_timeout:
+                return  # Exit silently after 5 minutes
+
+            # Silent retry with exponential backoff
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 1.5, 5)  # Cap at 30 seconds
 
     # The result now contains all the data we need
-    
+
     # Now that the wait is over, print the completion message and result.
     print(f"\n🎉 Research completed!")
-    
+
     # Save markdown report
     markdown_file = Path("interactive_research_report.md")
     markdown_file.write_text(result.markdown_report)
     print(f"📄 Markdown report saved to: {markdown_file}")
-    
+
     # PDF report already saved by workflow
     if result.pdf_file_path:
         print(f"📑 PDF report saved to: {result.pdf_file_path}")
     else:
         print(f"⚠️  PDF generation not available (continuing with markdown only)")
-    
+
     # Show summary and follow-up questions if available
     print(f"\n📋 Summary: {result.short_summary}")
-    
+
     print(f"\n🔍 Follow-up questions:")
     for i, question in enumerate(result.follow_up_questions, 1):
         print(f"   {i}. {question}")
-    
+
     print(f"\n📄 Research Result:")
     print("=" * 60)
     print(result.markdown_report)
@@ -176,7 +215,9 @@ async def run_interactive_research_with_clarifications(
 # Keep the old function for backward compatibility
 async def run_interactive_research(client: Client, query: str, workflow_id: str):
     """Legacy interactive research - redirects to new pattern"""
-    return await run_interactive_research_with_clarifications(client, query, workflow_id)
+    return await run_interactive_research_with_clarifications(
+        client, query, workflow_id
+    )
 
 
 async def get_workflow_status(client: Client, workflow_id: str):

@@ -1,3 +1,18 @@
+# Prep
+Server
+- restart to clear wf history
+
+Vscode
+- terminals
+- files: 
+
+Bug
+- pdf pfd bug in pdf activities L#103
+
+Network
+- dig api.openai.com +short # make sure ips covered in block_research*
+- sudo pfctl -s info # to refresh sudo
+
 ====================
 HELLO WORLD DEMO
 ====================
@@ -119,20 +134,22 @@ The same is true if I encounter a network issue between my app and downstream AP
 
 I'll temporarily cut network access to so that the research agent can't do its job
 
-[ACTION: Use firewall to block access to OpenAI]
-[ACTION: ping]
-
 Running deep research again.
+[ACTION: run_research_workflow.py "tell me all about marsupials"]
+[ACTION: to UI for workflow]
 
-[ACTION: run_research_workflow topic: tell me about marsupials]
+[ACTION: Use firewall to block access]
+[sudo pfctl -f block_research_traffic.pfrules]
+
 [Wait for orange]
 
 You can see the UI shows activity retries. This time triggered by timeouts.
 
-My activities are configured with a 1-minute timeout, and Temporal automatically retries until it gets a response.
+My activities are configured with a 35 second timeout, and Temporal automatically retries until it gets a response.
 
-[ACTION: Resume firewall access to OpenAI]
 Restoring my connection
+[ACTION: Resume firewall access]
+[sudo pfctl -f pfctl.rules.backup]
 
 [ACTION: wait]
 

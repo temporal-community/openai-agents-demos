@@ -14,6 +14,7 @@ from temporalio.contrib.openai_agents import (
     ModelActivityParameters,
     set_open_ai_agent_temporal_overrides,
 )
+from temporalio.common import RetryPolicy
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.worker import Worker
 
@@ -29,10 +30,16 @@ from openai_agents.workflows.tools_workflow import ToolsWorkflow
 
 async def main():
     logging.basicConfig(level=logging.INFO)
-    
+
     with set_open_ai_agent_temporal_overrides(
         model_params=ModelActivityParameters(
-            start_to_close_timeout=timedelta(seconds=60),
+            start_to_close_timeout=timedelta(seconds=35),
+            schedule_to_close_timeout=timedelta(seconds=300),
+            retry_policy=RetryPolicy(
+                backoff_coefficient=2.0,
+                initial_interval=timedelta(seconds=1),
+                maximum_interval=timedelta(seconds=5),
+            ),
         ),
     ):
         # Create client connected to server at the given address

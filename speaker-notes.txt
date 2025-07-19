@@ -3,8 +3,16 @@ Server
 - restart to clear wf history
 
 Vscode
-- terminals
-- files: 
+- hide 'problems' right click
+- terminals see screenshot in ./ (CLEAR all)
+- files: hello_world.py, run_hello*, manager.py, run_research_workflow, interactive_research_workflow:167
+
+Browser:
+- localhost:8233
+- https://platform.openai.com/logs?api=responses
+- cookbook https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api
+- my github research readme https://github.com/steveandroulakis/openai-agents-demos/tree/main/openai_agents/workflows/research_agents
+
 
 Bug
 - pdf pfd bug in pdf activities L#103
@@ -27,7 +35,7 @@ It's just a few lines of Python: define an Agent, then call Runner.run().
 
 Run it, and you get a haiku back.
 
-[ACTION: Run openai hello world]
+[ACTION: from dir: python -m examples.basic.hello_world]
 
 [ACTION: Screen split left/right, VSCode with hello agent code / Temporal UI]
 
@@ -39,7 +47,7 @@ I'll run the code by starting a Temporal worker to run the workflow execution.
 
 And then I'll run code that starts the workflow.
 
-[ACTION: Run Temporal hello world]
+[ACTION: Run Temporal hello world, run_hello*]
 
 I can now see the workflow executed in Temporal's UI in real time.
 
@@ -56,15 +64,17 @@ A simple "hello world" example mightn't need this durability, let's look at Open
 
 Just like the real ChatGPT Deep Research, this Agents SDK sample takes a research topic, crawls the web in parallel and generates a final report.
 
-[ACTION: run deep research]
+[ACTION: manager.py]
+[ACTION: from zsh dir: python -m examples.research_bot.main]
+[ACTION: marsupials]
 
 Running deep research can take minutes across many API calls.
 
-What happens if the process crashes half-way?
+What happens if the agent crashes half-way?
 
 What happens if a web search or LLM call fails?
 
-You'd need to start research all over again.
+You'd need to start the agent all over again.
 
 [ACTION: ctrl+c]
 
@@ -80,7 +90,7 @@ Let's run the OpenAI Deep Research sample inside a Temporal workflow.
 
 I'll start a couple of Temporal workers to handle the execution.
 
-[ACTION: run workers split]
+[ACTION: run 2 workers split]
 
 And run the workflow
 [ACTION: run_research_workflow topic: tell me about marsupials]
@@ -167,6 +177,8 @@ OpenAI's Cookbook includes a more advanced multi-agent research example inspired
 
 Like the earlier deep research sample, it starts with a research topic.
 
+[ACTION: scroll diagram]
+
 But this version is smarter: it generates clarifying questions about a topic to better understand what the user is asking.
 
 The user answers these questions, which are then used to create an enriched, higher-quality research prompt.
@@ -195,9 +207,11 @@ Workflow update is one of the ways you can interact with a Temporal workflow.
 
 [ACTION: interactive_research_workflow.py: provide_single_clarification]
 
-My workflow generates clarifying questions and waits for user input.
+The clarifying agent generates questions and waits for user input.
 
-The user answers these questions and they're sent to the workflow using Updates, and the workflow code collects them as state.
+The user answers these questions and they're sent to the workflow using Updates.
+
+The workflow code collects the answers and starts researching.
 
 [ACTION: Highlight: answer_current_question]
 
@@ -205,23 +219,22 @@ Let's try it out.
 
 I'll start the workflow and see what questions it has for me.
 
-[ACTION: run_interactive_workflow topic: where can I see bears in Alaska]
+[ACTION: run_interactive_workflow topic: top places in north america to find bears]
+[ACTION: UI workflow]
 
-One powerful thing about Temporal: workflows can wait indefinitely for interaction without the Temporal workers using any compute
-
-So you can have thousands, or even millions, of workflows waiting for a human or system response – without consuming resources.
+One powerful thing about Temporal: workflows can wait indefinitely for interaction without the Temporal workers using any resources
 
 [ACTION: Start workflow]
 
 I'll start a few more workers to process the tasks.
 
-[ACTION: Split terminal, start workers]
+[ACTION: Split terminal, start 5+ workers, run_worker]
 
-This workflow will potentially execute its steps across all of these workers.
+This workflow will potentially execute its steps across *all* of these workers.
 
 This is how you scale: spin up more workers as needed to handle load.
 
-I'd better answer these questions
+Now, technically, the workflow could wait forever for me to answer but I'd better get on with it.
 
 [ACTION: Answer questions]
 

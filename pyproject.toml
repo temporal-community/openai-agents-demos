@@ -28,6 +28,7 @@ dev = [
     "pytest>=7.1.2,<8",
     "pytest-asyncio>=0.18.3,<0.19",
     "pyright>=1.1.394",
+    "rich>=13.1.0, <14",
 ]
 
 [tool.uv]

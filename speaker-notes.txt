@@ -1,10 +1,14 @@
 # Prep
 Server
-- restart to clear wf history
+- restart temporal server to clear wf history
+
+# Screen size
+- Browser and vscode
 
 Vscode
-- hide 'problems' right click
-- terminals see screenshot in ./ (CLEAR all)
+- hide 'problems' right click (top term and bottom status)
+- terminals see screenshot in ./ 
+    -(CLEAR all)
 - files: hello_world.py, run_hello*, manager.py, run_research_workflow, interactive_research_workflow:167
 
 Browser:
@@ -12,7 +16,6 @@ Browser:
 - https://platform.openai.com/logs?api=responses
 - cookbook https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api
 - my github research readme https://github.com/steveandroulakis/openai-agents-demos/tree/main/openai_agents/workflows/research_agents
-
 
 Bug
 - pdf pfd bug in pdf activities L#103
@@ -105,7 +108,7 @@ If anything goes wrong, I know exactly where and why.
 
 [ACTION: Screen shows OpenAI's Trace Page]
 
-And you still get detailed traces for your agents from OpenAI.
+And you still get detailed traces and logs from OpenAI.
 
 
 ====================

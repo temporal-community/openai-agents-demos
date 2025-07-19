@@ -1,0 +1,263 @@
+====================
+HELLO WORLD DEMO
+====================
+
+[ACTION: Screen shows VSCode with Hello World OpenAI sample code, terminal]
+
+The OpenAI Agents SDK makes it simple to code and run AI agents.
+
+Let's start with the Hello World example from the OpenAI Agents SDK.
+
+It's just a few lines of Python: define an Agent, then call Runner.run().
+
+Run it, and you get a haiku back.
+
+[ACTION: Run openai hello world]
+
+[ACTION: Screen split left/right, VSCode with hello agent code / Temporal UI]
+
+Now this same logic is running in a Temporal workflow.
+
+We just added a @workflow.defn decorator and a run() method.
+
+I'll run the code by starting a Temporal worker to run the workflow execution.
+
+And then I'll run code that starts the workflow.
+
+[ACTION: Run Temporal hello world]
+
+I can now see the workflow executed in Temporal's UI in real time.
+
+The logic stays exactly the same — but now it survives crashes, supports retries, and scales.
+
+
+====================
+DEEP RESEARCH DEMO
+====================
+
+[ACTION: Screen split left/right, VSCode with deep research agent code]
+
+A simple "hello world" example mightn't need this durability, let's look at OpenAI's Deep Research sample.
+
+Just like the real ChatGPT Deep Research, this Agents SDK sample takes a research topic, crawls the web in parallel and generates a final report.
+
+[ACTION: run deep research]
+
+Running deep research can take minutes across many API calls.
+
+What happens if the process crashes half-way?
+
+What happens if a web search or LLM call fails?
+
+You'd need to start research all over again.
+
+[ACTION: ctrl+c]
+
+And since the sample runs in a single process, scaling this up is tricky.
+
+There's no clear way to parallelize research across many processes or machines.
+
+[ACTION: Same screen]
+
+This is where Temporal comes in.
+
+Let's run the OpenAI Deep Research sample inside a Temporal workflow.
+
+I'll start a couple of Temporal workers to handle the execution.
+
+[ACTION: run workers split]
+
+And run the workflow
+[ACTION: run_research_workflow topic: tell me about marsupials]
+
+I can see the workflow executing in real-time.
+
+Each research step appears as a separate event called an activity.
+
+If anything goes wrong, I know exactly where and why.
+
+[ACTION: wait]
+
+[ACTION: Screen shows OpenAI's Trace Page]
+
+And you still get detailed traces for your agents from OpenAI.
+
+
+====================
+RESILIENCE DEMO - KILLING WORKERS
+====================
+
+[ACTION: SAME Screen]
+
+Temporal applications can survive process crashes and infrastructure downtime.
+
+Let's run deep research again but this time we'll stop the Temporal workers half-way through.
+
+[ACTION: run_research_workflow topic: tell me about marsupials]
+
+[ACTION: Stop workers]
+[Wait for orange]
+
+Checking the workflow's progress in the UI, you can see the search activities go orange.
+
+Temporal is automatically retrying those steps – it's waiting for a worker to become available.
+
+Even though I've stopped all workers, the workflow isn't lost or failed.
+
+As soon as I bring the workers back online, they pick up the pending tasks and continue execution where we left off.
+
+This is especially useful at scale. Temporal users often run entire fleets of workers across multiple availability zones or regions.
+
+If one zone or region goes down, others keep the workflows running.
+
+
+====================
+RESILIENCE DEMO - NETWORK ISSUES
+====================
+
+The same is true if I encounter a network issue between my app and downstream APIs
+
+I'll temporarily cut network access to so that the research agent can't do its job
+
+[ACTION: Use firewall to block access to OpenAI]
+[ACTION: ping]
+
+Running deep research again.
+
+[ACTION: run_research_workflow topic: tell me about marsupials]
+[Wait for orange]
+
+You can see the UI shows activity retries. This time triggered by timeouts.
+
+My activities are configured with a 1-minute timeout, and Temporal automatically retries until it gets a response.
+
+[ACTION: Resume firewall access to OpenAI]
+Restoring my connection
+
+[ACTION: wait]
+
+Once the connection is restored, the workflow continues without any intervention.
+
+There you are. Research is back in action!
+
+====================
+INTERACTIVE WORKFLOW DEMO
+====================
+
+[ACTION: Screen shows Cookbook]
+
+OpenAI's Cookbook includes a more advanced multi-agent research example inspired by the real ChatGPT Deep Research feature.
+
+Like the earlier deep research sample, it starts with a research topic.
+
+But this version is smarter: it generates clarifying questions about a topic to better understand what the user is asking.
+
+The user answers these questions, which are then used to create an enriched, higher-quality research prompt.
+
+Finally, the workflow generates a PDF report.
+
+[ACTION: Screen shows My Github Demo: Scroll Readme]
+
+I wanted to implement this same interactive deep research pattern using Temporal.
+
+I introduced a triage agent to determine if clarifications are needed.
+
+A clarifying agent to generate clarifying questions.
+
+An instruction agent to generate an enriched prompt.
+
+And a PDF generator agent to determine how best to format the final report in document form.
+
+[ACTION: Screen split / code and Temporal UI]
+
+So how did we make this Temporal workflow interactive so that it can accept answers?
+
+For this, I use Temporal's Workflow Update primitive.
+
+Workflow update is one of the ways you can interact with a Temporal workflow.
+
+[ACTION: interactive_research_workflow.py: provide_single_clarification]
+
+My workflow generates clarifying questions and waits for user input.
+
+The user answers these questions and they're sent to the workflow using Updates, and the workflow code collects them as state.
+
+[ACTION: Highlight: answer_current_question]
+
+Let's try it out.
+
+I'll start the workflow and see what questions it has for me.
+
+[ACTION: run_interactive_workflow topic: where can I see bears in Alaska]
+
+One powerful thing about Temporal: workflows can wait indefinitely for interaction without the Temporal workers using any compute
+
+So you can have thousands, or even millions, of workflows waiting for a human or system response – without consuming resources.
+
+[ACTION: Start workflow]
+
+I'll start a few more workers to process the tasks.
+
+[ACTION: Split terminal, start workers]
+
+This workflow will potentially execute its steps across all of these workers.
+
+This is how you scale: spin up more workers as needed to handle load.
+
+I'd better answer these questions
+
+[ACTION: Answer questions]
+
+Each time I send an answer, the workflow picks it up through a workflow update
+
+Once I've answered all the clarifying questions, it moves forward with research.
+
+[ACTION: Wait]
+
+====================
+BUG FIX DEMO
+====================
+
+Oh, it looks like something went wrong with the 'generate PDF' step. 
+
+Let me check the Temporal UI to see what's happening.
+
+[ACTION: Click on the failing PDF generation activity in Temporal UI]
+
+I can see the activity is failing with an AttributeError.
+
+The stack trace tells me exactly where the issue is.
+
+Let me fix this in the code.
+
+The error is coming from the PDF generation activity. Let me check the PDF generator agent first.
+
+[ACTION: Open pdf_generator_agent.py]
+
+This agent is calling the PDF generation activity. Let me look at the actual activity implementation.
+
+[ACTION: Open pdf_generation_activity.py, scroll to line 101]
+
+Ah, here's the bug! Better fix this.
+
+[ACTION: Fix line 101: write_pfd → write_pdf]
+
+Now I need to restart my workers with the fixed code.
+
+[ACTION: kill workers]
+[ACTION: restart workers]
+
+The great thing about Temporal is that I don't need to restart the workflow execution. The workflow will automatically resume from where it left off once the workers are back up with the fixed code.
+
+[ACTION: Wait for workflow to resume and complete]
+
+Awesome! The workflow resumed and completed successfully.
+
+This bug happened to me in my development environment, but equally it could have happened in production and stalled thousands of workflows that would need rescuing in a hurry.
+
+With Temporal there's no need to re-run earlier steps, no need to manually restore state: the workflow simply resumes from the point of failure.
+
+[ACTION: Open finder: PDF folder]
+[ACTION: Show generated PDF file]
+
+And we're done! The workflow outputs a PDF final report — just like ChatGPT Deep Research.

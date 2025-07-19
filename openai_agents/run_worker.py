@@ -10,10 +10,10 @@ logging.getLogger("openai.agents").setLevel(logging.CRITICAL)
 
 from temporalio.client import Client
 from temporalio.contrib.openai_agents import (
-    ModelActivity,
     ModelActivityParameters,
     set_open_ai_agent_temporal_overrides,
 )
+from openai_agents.serializable_model_activity import SerializableModelActivity
 from temporalio.common import RetryPolicy
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.worker import Worker
@@ -58,7 +58,7 @@ async def main():
                 InteractiveResearchWorkflow,
             ],
             activities=[
-                ModelActivity().invoke_model_activity,
+                SerializableModelActivity().invoke_model_activity,
                 get_weather,
                 generate_pdf,
             ],

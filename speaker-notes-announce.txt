@@ -1,0 +1,72 @@
+# Prep
+Server
+- restart temporal server to clear wf history
+
+# Screen size
+- Browser and vscode
+
+Vscode
+- fullscreen terminal move across
+- hide 'problems' right click (top term and bottom status)
+- terminals see screenshot in ./ 
+    -(CLEAR all)
+- files: hello_world.py, hello_world_workflow, research_bot_workflow, interactive_research_workflow:24:167
+
+Browser:
+- localhost:8233
+
+
+(0:00-0:10) Introduction & Code
+
+[ACTION: Side by side OpenAI hello sample and Temporal sample wrap]
+
+Thanks, Dom. The OpenAI Agents SDK makes it really easy to code AI agents. Let's show how Temporal gives one of your samples production-ready resilience.
+Here's a standard "Hello World" sample agent. To make it durable with Temporal, we just add a couple of decorators: @workflow.defn to define the workflow class, and @workflow.run for the entry point.
+
+That's it. Now, the agent's state persists. Let's see what that means for a more complex agent.
+
+(0:10-0:35) Resilience Demo
+[ACTION: Screen shows deep research code left, Temporal UI right]
+[ACTION: Start workflow]
+Here's OpenAI's deep research sample, integrated with Temporal.
+
+It can take several minutes and many API calls to run. 
+
+What happens if the process crashes halfway through? 
+
+I've stopped the Temporal worker that’s running this workflow so we can find out.
+
+[ACTION: stop worker, wait for orange activities in Temporal UI]
+Without Temporal, the entire job would fail. But here, the workflow simply waits for a worker to become available again.
+
+In the real-world, this means your application can survive entire cloud regions going down and other catastrophic issues.
+
+[ACTION: Restart worker, show recovery in UI]
+As soon as I bring a worker back online, it picks up exactly where it left off. No state is lost, and no progress is wasted. Research continues.
+
+Plus, I can run as many workers as I want to scale to handle millions of agent interactions at a time.
+
+[ACTION: Wait]
+
+(0:35-0:55) Interactivity Demo
+[ACTION: Interactive research workflow code]
+[ACTION: Start workflow, let it wait for my input]
+Temporal also lets you interact with agentic apps while they're running.
+
+I’ve modified the deep research sample to ask the user some clarifying questions and it’s now waiting for my input.
+
+Temporal workflows can be long running. Technically, they can wait forever without being a burden on Temporal workers.
+
+This means you can efficiently have millions of workflows open waiting for input from humans, or other systems.
+
+As I answer these questions, my answers are sent to and handled by the running workflow.
+
+[ACTION: Silently finish answers]
+The agent is ready to start researching.
+
+[ACTION: Time lapse]
+And it looks like it’s ready
+
+[ACTION: Show PDF]
+(0:55-1:00) Conclusion with “Learn More” type overlay over the video
+I hope you enjoy using Temporal to bring resilience, scale, and interactivity to your OpenAI Agents SDK agents.

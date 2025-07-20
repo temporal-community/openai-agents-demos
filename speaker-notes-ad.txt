@@ -1,0 +1,26 @@
+[ACTION: Screen shows OpenAI Blog post about Agents SDK]
+
+OpenAI’s Agents SDK makes it easy to build smart AI agents. But what happens when they crash in production? How can I scale?
+
+[ACTION: Temporal site]
+
+[ACTION: Left, OpenAI sample code and Temporal code side by side]
+
+Open-source framework Temporal has integrated with OpenAI’s Agents SDK to help people build invincible, production-ready agents. Watch.
+
+[ACTION: Research agent]
+This Temporal-enabled OpenAI Agents SDK deep research sample runs for minutes over several API calls 
+
+[ACTION: Worker killed, retrying in orange]
+I killed the Temporal worker that's running the agent.
+
+When I bring a worker back online, I can see the agent picks up exactly where it left off.
+
+No work was lost.
+
+And if I run many workers, I can handle millions of agents running in parallel.
+
+(25-30s) Call to Action
+[ACTION: Temporal Site]
+
+Steve: So stop building agents that fall over and don’t scale. Start building durable AI agents today with Temporal and the OpenAI Agents SDK.

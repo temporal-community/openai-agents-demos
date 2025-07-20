@@ -6,10 +6,11 @@ Server
 - Browser and vscode
 
 Vscode
+- fullscreen terminal move across
 - hide 'problems' right click (top term and bottom status)
 - terminals see screenshot in ./ 
     -(CLEAR all)
-- files: hello_world.py, run_hello*, manager.py, run_research_workflow, interactive_research_workflow:167
+- files: hello_world.py, hello_world_workflow, manager.py, run_research_workflow, interactive_research_workflow:167
 
 Browser:
 - localhost:8233
@@ -28,11 +29,11 @@ Network
 HELLO WORLD DEMO
 ====================
 
-[ACTION: Screen shows VSCode with Hello World OpenAI sample code, terminal]
+[ACTION: Screen shows vscode openai hello]
 
 The OpenAI Agents SDK makes it simple to code and run AI agents.
 
-Let's start with the Hello World example from the OpenAI Agents SDK.
+Let's start with the Hello World example that OpenAI provides in their repo.
 
 It's just a few lines of Python: define an Agent, then call Runner.run().
 
@@ -54,7 +55,7 @@ And then I'll run code that starts the workflow.
 
 I can now see the workflow executed in Temporal's UI in real time.
 
-The logic stays exactly the same — but now it survives crashes, supports retries, and scales.
+The logic stays exactly the same — but because it's a Temporal workflow, it survives crashes, supports retries, and scales.
 
 
 ====================
@@ -89,13 +90,12 @@ There's no clear way to parallelize research across many processes or machines.
 
 This is where Temporal comes in.
 
-Let's run the OpenAI Deep Research sample inside a Temporal workflow.
+[ACTION: Show workflow]
+This is the Temporal workflow version of the deep research sample
 
-I'll start a couple of Temporal workers to handle the execution.
+Let's run it.
 
-[ACTION: run 2 workers split]
-
-And run the workflow
+[ACTION: RUN]
 [ACTION: run_research_workflow topic: tell me about marsupials]
 
 I can see the workflow executing in real-time.
@@ -115,7 +115,7 @@ And you still get detailed traces and logs from OpenAI.
 RESILIENCE DEMO - KILLING WORKERS
 ====================
 
-[ACTION: SAME Screen]
+[ACTION: split screen]
 
 Temporal applications can survive process crashes and infrastructure downtime.
 
@@ -123,16 +123,19 @@ Let's run deep research again but this time we'll stop the Temporal workers half
 
 [ACTION: run_research_workflow topic: tell me about marsupials]
 
-[ACTION: Stop workers]
+[ACTION: Stop worker]
 [Wait for orange]
 
 Checking the workflow's progress in the UI, you can see the search activities go orange.
 
 Temporal is automatically retrying those steps – it's waiting for a worker to become available.
 
-Even though I've stopped all workers, the workflow isn't lost or failed.
+Even though I've stopped all worker, the workflow isn't lost or failed.
 
-As soon as I bring the workers back online, they pick up the pending tasks and continue execution where we left off.
+As soon as I bring the worker back online, they pick up the pending tasks and continue execution where we left off.
+
+[ACTION: Revive workers]
+[ACTION: Wait]
 
 This is especially useful at scale. Temporal users often run entire fleets of workers across multiple availability zones or regions.
 
@@ -145,7 +148,7 @@ RESILIENCE DEMO - NETWORK ISSUES
 
 The same is true if I encounter a network issue between my app and downstream APIs
 
-I'll temporarily cut network access to so that the research agent can't do its job
+I'll temporarily cut network access so that the research agent can't do its job
 
 Running deep research again.
 [ACTION: run_research_workflow.py "tell me all about marsupials"]
@@ -158,7 +161,7 @@ Running deep research again.
 
 You can see the UI shows activity retries. This time triggered by timeouts.
 
-My activities are configured with a 35 second timeout, and Temporal automatically retries until it gets a response.
+My activities are configured with a 1 minute timeout, and Temporal automatically retries until it gets a response.
 
 Restoring my connection
 [ACTION: Resume firewall access]
@@ -169,6 +172,14 @@ Restoring my connection
 Once the connection is restored, the workflow continues without any intervention.
 
 There you are. Research is back in action!
+
+Before I continue with the next workflow runs, I'll start a few more workers to handle the load.
+
+[ACTION: Split terminal, start 2 more workers, run_worker]
+
+Workflows will potentially run their steps distributed across *all* of these workers.
+
+This is how you scale in Temporal: spin up more workers as needed to handle thousands, if not millions of executions simultaneously.
 
 ====================
 INTERACTIVE WORKFLOW DEMO
@@ -228,14 +239,6 @@ I'll start the workflow and see what questions it has for me.
 One powerful thing about Temporal: workflows can wait indefinitely for interaction without the Temporal workers using any resources
 
 [ACTION: Start workflow]
-
-I'll start a few more workers to process the tasks.
-
-[ACTION: Split terminal, start 5+ workers, run_worker]
-
-This workflow will potentially execute its steps across *all* of these workers.
-
-This is how you scale: spin up more workers as needed to handle load.
 
 Now, technically, the workflow could wait forever for me to answer but I'd better get on with it.
 

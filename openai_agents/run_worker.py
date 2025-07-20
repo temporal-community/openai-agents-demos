@@ -33,7 +33,7 @@ async def main():
 
     with set_open_ai_agent_temporal_overrides(
         model_params=ModelActivityParameters(
-            start_to_close_timeout=timedelta(seconds=35),
+            start_to_close_timeout=timedelta(seconds=60),
             schedule_to_close_timeout=timedelta(seconds=300),
             retry_policy=RetryPolicy(
                 backoff_coefficient=2.0,

@@ -4,6 +4,8 @@ This repository contains four standalone demos showcasing the OpenAI Agents Pyth
 
 For detailed information about the research agents in this repo, see [openai_agents/workflows/research_agents/README.md](openai_agents/workflows/research_agents/README.md)
 
+More Temporal OpenAI Agents SDK samples can be found in Temporal's [samples-python repository](https://github.com/temporalio/samples-python/tree/main/openai_agents).
+
 ## Prerequisites
 
 1. **Python 3.10+** - Required for the demos

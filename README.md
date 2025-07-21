@@ -21,7 +21,9 @@ curl -sSf https://temporal.download/cli.sh | sh
 temporal server start-dev
 ```
 
-### PDF Generation Dependencies
+### PDF Generation Dependencies (optional)
+
+Only used in `Demo 4: Multi-Agent Interactive Research Workflow`
 
 For PDF generation functionality, you'll need WeasyPrint and its system dependencies:
 

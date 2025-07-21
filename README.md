@@ -21,7 +21,19 @@ curl -sSf https://temporal.download/cli.sh | sh
 temporal server start-dev
 ```
 
-### PDF Generation Dependencies (optional)
+## Setup
+
+1. Clone this repository
+2. Install dependencies:
+   ```bash
+   uv sync
+   ```
+3. Set your OpenAI API key:
+   ```bash
+   export OPENAI_API_KEY="your-api-key-here"
+   ```
+
+### PDF Generation (optional)
 
 Only used in `Demo 4: Multi-Agent Interactive Research Workflow`
 
@@ -59,18 +71,6 @@ sudo dnf install python-pip pango
 4. Set environment variable: `WEASYPRINT_DLL_DIRECTORIES=C:\msys64\mingw64\bin`
 
 **Note:** PDF generation gracefully degrades when dependencies are unavailable - workflows will still generate markdown reports.
-
-## Setup
-
-1. Clone this repository
-2. Install dependencies:
-   ```bash
-   uv sync
-   ```
-3. Set your OpenAI API key:
-   ```bash
-   export OPENAI_API_KEY="your-api-key-here"
-   ```
 
 ## Running the Demos
 

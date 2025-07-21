@@ -1,11 +1,11 @@
 # Agent used to generate PDF reports from markdown content.
 from datetime import timedelta
+
 from agents import Agent
 from pydantic import BaseModel
 from temporalio.contrib import openai_agents as temporal_agents
 
 from openai_agents.workflows.pdf_generation_activity import generate_pdf
-
 
 PDF_GENERATION_PROMPT = (
     "You are a PDF formatting specialist tasked with converting markdown research reports "
@@ -26,13 +26,13 @@ PDF_GENERATION_PROMPT = (
 class PDFReportData(BaseModel):
     success: bool
     """Whether PDF generation was successful"""
-    
+
     formatting_notes: str
     """Notes about the formatting decisions made"""
-    
+
     pdf_file_path: str | None = None
     """Path to the generated PDF file"""
-    
+
     error_message: str | None = None
     """Error message if PDF generation failed"""
 

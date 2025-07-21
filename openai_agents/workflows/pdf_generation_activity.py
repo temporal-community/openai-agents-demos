@@ -1,16 +1,18 @@
-import markdown
-from dataclasses import dataclass
-from temporalio import activity
-from typing import Optional
-from pydantic import BaseModel
 import os
+from dataclasses import dataclass
+from typing import Optional
+
+import markdown
+from pydantic import BaseModel
+from temporalio import activity
 
 # Set library path for WeasyPrint if not already set
-if not os.environ.get('DYLD_FALLBACK_LIBRARY_PATH'):
-    os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = '/opt/homebrew/lib'
+if not os.environ.get("DYLD_FALLBACK_LIBRARY_PATH"):
+    os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = "/opt/homebrew/lib"
 
 try:
     import weasyprint
+
     WEASYPRINT_AVAILABLE = True
 except (ImportError, OSError) as e:
     weasyprint = None
@@ -20,6 +22,7 @@ except (ImportError, OSError) as e:
 
 class StylingOptions(BaseModel):
     """Styling options for PDF generation"""
+
     font_size: Optional[int] = None
     primary_color: Optional[str] = None
 
@@ -39,12 +42,12 @@ async def generate_pdf(
 ) -> PDFGenerationResult:
     """
     Generate PDF from markdown content with specified styling.
-    
+
     Args:
         markdown_content: The markdown content to convert to PDF
         title: Title for the PDF document
         styling_options: Optional styling configurations
-    
+
     Returns:
         PDFGenerationResult with pdf_bytes and success status
     """
@@ -52,16 +55,15 @@ async def generate_pdf(
         return PDFGenerationResult(
             pdf_file_path="",
             success=False,
-            error_message="weasyprint library not available"
+            error_message="weasyprint library not available",
         )
-    
+
     try:
         # Convert markdown to HTML
         html_content = markdown.markdown(
-            markdown_content,
-            extensions=['tables', 'fenced_code', 'toc']
+            markdown_content, extensions=["tables", "fenced_code", "toc"]
         )
-        
+
         # Create complete HTML document with styling
         full_html = f"""
         <!DOCTYPE html>
@@ -84,34 +86,29 @@ async def generate_pdf(
         </body>
         </html>
         """
-        
+
         # Generate PDF and save to file
+        import datetime
         import os
         from pathlib import Path
-        import datetime
-        
+
         # Create pdf_output directory if it doesn't exist
         pdf_output_dir = Path("pdf_output")
         pdf_output_dir.mkdir(exist_ok=True)
-        
+
         # Create a unique filename with timestamp
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"research_report_{timestamp}.pdf"
         pdf_path = pdf_output_dir / filename
-        
+
         # Generate PDF directly to file
         weasyprint.HTML(string=full_html).write_pdf(str(pdf_path))
-        
-        return PDFGenerationResult(
-            pdf_file_path=str(pdf_path),
-            success=True
-        )
-        
+
+        return PDFGenerationResult(pdf_file_path=str(pdf_path), success=True)
+
     except Exception as e:
         return PDFGenerationResult(
-            pdf_file_path="",
-            success=False,
-            error_message=str(e)
+            pdf_file_path="", success=False, error_message=str(e)
         )
 
 
@@ -239,13 +236,13 @@ def _get_custom_css(styling_options: Optional[StylingOptions]) -> str:
     """Get custom CSS based on styling options."""
     if not styling_options:
         return ""
-    
+
     custom_css = ""
-    
+
     # Add custom font size
     if styling_options.font_size:
         custom_css += f"body {{ font-size: {styling_options.font_size}px; }}\n"
-    
+
     # Add custom colors
     if styling_options.primary_color:
         custom_css += f"""
@@ -253,5 +250,5 @@ def _get_custom_css(styling_options: Optional[StylingOptions]) -> str:
         .document-title {{ border-bottom-color: {styling_options.primary_color}; }}
         .content blockquote {{ border-left-color: {styling_options.primary_color}; }}
         """
-    
+
     return custom_css

@@ -29,6 +29,7 @@ dev = [
     "pytest-asyncio>=0.18.3,<0.19",
     "pyright>=1.1.394",
     "rich>=13.1.0, <14",
+    "types-markdown>=3.8.0.20250708",
 ]
 
 [tool.uv]

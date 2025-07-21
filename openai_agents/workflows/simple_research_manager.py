@@ -70,15 +70,16 @@ class SimpleResearchManager:
             return None
 
     async def _write_report(self, query: str, search_results: list[str]) -> ReportData:
-        input_str = f"Original query: {query}\nSummarized search results: {search_results}"
-        
+        input_str = (
+            f"Original query: {query}\nSummarized search results: {search_results}"
+        )
+
         # Generate markdown report
         markdown_result = await Runner.run(
             self.writer_agent,
             input_str,
             run_config=self.run_config,
         )
-        
+
         report_data = markdown_result.final_output_as(ReportData)
         return report_data
-    

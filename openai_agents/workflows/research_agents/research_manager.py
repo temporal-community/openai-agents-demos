@@ -18,6 +18,10 @@ with workflow.unsafe.imports_passed_through():
     )
 
     from openai_agents.workflows.research_agents.clarifying_agent import Clarifications
+    from openai_agents.workflows.research_agents.pdf_generator_agent import (
+        new_pdf_generator_agent,
+    )
+
     # from openai_agents.workflows.research_agents.instruction_agent import (
     #     new_instruction_agent,
     # )
@@ -31,9 +35,6 @@ with workflow.unsafe.imports_passed_through():
     from openai_agents.workflows.research_agents.writer_agent import (
         ReportData,
         new_writer_agent,
-    )
-    from openai_agents.workflows.research_agents.pdf_generator_agent import (
-        new_pdf_generator_agent,
     )
 
 
@@ -102,16 +103,16 @@ class InteractiveResearchManager:
                 )
             else:
                 # No clarifications needed, continue with research
-                # The triage agent routed to instruction agent, which should then 
+                # The triage agent routed to instruction agent, which should then
                 # continue through planner -> search -> writer automatically
                 # Let's run the direct research flow since no clarifications are needed
                 search_plan = await self._plan_searches(query)
                 search_results = await self._perform_searches(search_plan)
                 report = await self._write_report(query, search_results)
                 return ClarificationResult(
-                    needs_clarifications=False, 
+                    needs_clarifications=False,
                     research_output=report.markdown_report,
-                    report_data=report
+                    report_data=report,
                 )
 
     async def run_with_clarifications_complete(
@@ -214,17 +215,17 @@ class InteractiveResearchManager:
         input_str: str = (
             f"Original query: {query}\nSummarized search results: {search_results}"
         )
-        
+
         # Generate markdown report
         markdown_result = await Runner.run(
             self.writer_agent,
             input_str,
             run_config=self.run_config,
         )
-        
+
         report_data = markdown_result.final_output_as(ReportData)
         return report_data
-    
+
     async def _generate_pdf_report(self, report_data: ReportData) -> str | None:
         """Generate PDF from markdown report, return file path"""
         try:
@@ -233,7 +234,7 @@ class InteractiveResearchManager:
                 f"Convert this markdown report to PDF:\n\n{report_data.markdown_report}",
                 run_config=self.run_config,
             )
-            
+
             pdf_output = pdf_result.final_output_as(type(pdf_result.final_output))
             if pdf_output.success:
                 return pdf_output.pdf_file_path

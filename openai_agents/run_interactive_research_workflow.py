@@ -1,7 +1,7 @@
 import argparse
 import asyncio
-from typing import Dict, List
 from pathlib import Path
+from typing import Dict, List
 
 from temporalio.client import Client
 from temporalio.contrib.pydantic import pydantic_data_converter
@@ -165,7 +165,7 @@ async def run_interactive_research_with_clarifications(
     # This call will block until the workflow is complete.
     result = None
     retry_timeout = 300  # 5 minutes total
-    retry_delay = 2  # Start with 2 second delays
+    retry_delay = 2.0  # Start with 2 second delays
     start_time = asyncio.get_event_loop().time()
 
     while True:
@@ -181,7 +181,7 @@ async def run_interactive_research_with_clarifications(
 
             # Silent retry with exponential backoff
             await asyncio.sleep(retry_delay)
-            retry_delay = min(retry_delay * 1.5, 5)  # Cap at 30 seconds
+            retry_delay = min(retry_delay * 1.5, 5.0)  # Cap at 5 seconds
 
     # The result now contains all the data we need
 

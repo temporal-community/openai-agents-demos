@@ -1,5 +1,7 @@
-from temporalio import workflow
 from dataclasses import dataclass
+
+from temporalio import workflow
+from temporalio.exceptions import ApplicationError
 
 from openai_agents.workflows.research_agents.research_manager import (
     InteractiveResearchManager,
@@ -15,6 +17,7 @@ from openai_agents.workflows.research_agents.research_models import (
 @dataclass
 class InteractiveResearchResult:
     """Result from interactive research workflow including both markdown and PDF"""
+
     short_summary: str
     markdown_report: str
     follow_up_questions: list[str]
@@ -42,12 +45,14 @@ class InteractiveResearchWorkflow:
         if initial_query and not use_clarifications:
             # Simple direct research mode - backward compatibility
             report_data = await self.research_manager._run_direct(initial_query)
-            pdf_file_path = await self.research_manager._generate_pdf_report(report_data)
+            pdf_file_path = await self.research_manager._generate_pdf_report(
+                report_data
+            )
             return InteractiveResearchResult(
                 short_summary=report_data.short_summary,
                 markdown_report=report_data.markdown_report,
                 follow_up_questions=report_data.follow_up_questions,
-                pdf_file_path=pdf_file_path
+                pdf_file_path=pdf_file_path,
             )
 
         # Wait for user to start the research via an update and for clarifications to be collected.
@@ -66,7 +71,7 @@ class InteractiveResearchWorkflow:
                 short_summary="Research ended by user",
                 markdown_report="Research workflow ended by user",
                 follow_up_questions=[],
-                pdf_file_path=None
+                pdf_file_path=None,
             )
 
         # If we are now in the 'researching' state, perform the long-running work.
@@ -79,12 +84,14 @@ class InteractiveResearchWorkflow:
         # At this point, the workflow is complete, so we return the final result.
         if self.current_interaction and self.current_interaction.report_data:
             # Generate PDF if we have report data
-            pdf_file_path = await self.research_manager._generate_pdf_report(self.current_interaction.report_data)
+            pdf_file_path = await self.research_manager._generate_pdf_report(
+                self.current_interaction.report_data
+            )
             return InteractiveResearchResult(
                 short_summary=self.current_interaction.report_data.short_summary,
                 markdown_report=self.current_interaction.report_data.markdown_report,
                 follow_up_questions=self.current_interaction.report_data.follow_up_questions,
-                pdf_file_path=pdf_file_path
+                pdf_file_path=pdf_file_path,
             )
         else:
             final_result = "No research completed"
@@ -94,7 +101,7 @@ class InteractiveResearchWorkflow:
                 short_summary="No research completed",
                 markdown_report=final_result,
                 follow_up_questions=[],
-                pdf_file_path=None
+                pdf_file_path=None,
             )
 
     async def _start_interactive_research(self, query: str) -> None:
@@ -118,7 +125,9 @@ class InteractiveResearchWorkflow:
                 self.current_interaction.status = "researching"
             else:
                 # Fallback if research failed
-                self.current_interaction.final_result = result.research_output or "Research failed to complete"
+                self.current_interaction.final_result = (
+                    result.research_output or "Research failed to complete"
+                )
                 self.current_interaction.status = "completed"
 
     async def _complete_research_with_clarifications(self) -> None:
@@ -127,8 +136,10 @@ class InteractiveResearchWorkflow:
             return
 
         # Check if this is direct research (no clarifications) and research is already complete
-        if (not self.current_interaction.clarification_responses and 
-            self.current_interaction.report_data is not None):
+        if (
+            not self.current_interaction.clarification_responses
+            and self.current_interaction.report_data is not None
+        ):
             # Direct research is already complete, just update status
             self.current_interaction.status = "completed"
             return
@@ -161,7 +172,7 @@ class InteractiveResearchWorkflow:
         # Always use clarifying questions for interactive mode
         await self._start_interactive_research(input.query)
         if not self.current_interaction:
-            raise RuntimeError("Failed to start research interaction")
+            raise ApplicationError("Failed to start research interaction")
         return self.current_interaction
 
     @workflow.update
@@ -169,16 +180,10 @@ class InteractiveResearchWorkflow:
         self, input: SingleClarificationInput
     ) -> ResearchInteraction:
         """Provide a single clarification response"""
+        # Validator ensures current_interaction is not None, but we need explicit check for type checker
         if not self.current_interaction:
-            raise ValueError("No active research interaction")
-
-        if self.current_interaction.status not in [
-            "awaiting_clarifications",
-            "collecting_answers",
-        ]:
-            raise ValueError(
-                f"Not collecting clarifications. Current status: {self.current_interaction.status}"
-            )
+            # This should never happen due to validator, but satisfies type checker
+            raise ApplicationError("No active research interaction")
 
         # Update status to collecting answers if this is the first answer
         if self.current_interaction.status == "awaiting_clarifications":
@@ -199,13 +204,10 @@ class InteractiveResearchWorkflow:
         self, input: ClarificationInput
     ) -> ResearchInteraction:
         """Provide all clarification responses at once (legacy compatibility)"""
+        # Validator ensures current_interaction is not None, but we need explicit check for type checker
         if not self.current_interaction:
-            raise ValueError("No active research interaction")
-
-        if self.current_interaction.status != "awaiting_clarifications":
-            raise ValueError(
-                f"Not awaiting clarifications. Current status: {self.current_interaction.status}"
-            )
+            # This should never happen due to validator, but satisfies type checker
+            raise ApplicationError("No active research interaction")
 
         self.current_interaction.clarification_responses = input.responses
         # Mark all questions as answered
@@ -223,10 +225,29 @@ class InteractiveResearchWorkflow:
         if not input.answer.strip():
             raise ValueError("Answer cannot be empty")
 
+        if not self.current_interaction:
+            raise ValueError("No active research interaction")
+
+        if self.current_interaction.status not in [
+            "awaiting_clarifications",
+            "collecting_answers",
+        ]:
+            raise ValueError(
+                f"Not collecting clarifications. Current status: {self.current_interaction.status}"
+            )
+
     @provide_clarifications.validator
     def validate_provide_clarifications(self, input: ClarificationInput) -> None:
         if not input.responses:
             raise ValueError("Clarification responses cannot be empty")
+
+        if not self.current_interaction:
+            raise ValueError("No active research interaction")
+
+        if self.current_interaction.status != "awaiting_clarifications":
+            raise ValueError(
+                f"Not awaiting clarifications. Current status: {self.current_interaction.status}"
+            )
 
     @workflow.signal
     async def end_workflow_signal(self) -> None:

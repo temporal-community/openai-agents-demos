@@ -2,7 +2,7 @@
 name = "openai-agents-demos"
 version = "0.1.0"
 description = "OpenAI Agents Python SDK Demo Repository"
-authors = [{ name = "OpenAI Agents Demo", email = "demo@example.com" }]
+authors = [{ name = "Steve Androulakis", email = "steve.androulakis@temporal.io" }]
 requires-python = ">=3.10"
 readme = "README.md"
 license = "MIT"

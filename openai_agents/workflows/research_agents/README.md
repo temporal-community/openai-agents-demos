@@ -31,18 +31,25 @@ User Query → Planner Agent → Search Agent(s) → Writer Agent → Markdown R
 
 **Planner Agent** (`planner_agent.py`)
 - Analyzes the user query and generates 5-20 strategic web search terms
-- Uses GPT-4o for comprehensive search planning
+- Uses `gpt-4o` for comprehensive search planning
 - Outputs structured `WebSearchPlan` with search terms and reasoning
+- Each search item includes `reason` (justification) and `query` (search term)
 
-**Search Agent** (`search_agent.py`) 
-- Executes multiple web searches in parallel using the search plan
-- Each search includes the query term and reasoning for context
+**Search Agent** (`search_agent.py`)
+- Executes web searches using `WebSearchTool()` with required tool usage
+- Produces 2-3 paragraph summaries (max 300 words) per search
+- Focuses on capturing main points concisely for report synthesis
 - Handles search failures gracefully and returns consolidated results
+- Uses no LLM model directly - just processes search tool results
 
 **Writer Agent** (`writer_agent.py`)
-- Compiles all search results into a comprehensive markdown report
-- Synthesizes information from multiple sources
-- Structures the final output as a cohesive research document
+- Uses `o3-mini` model for high-quality report synthesis
+- Generates comprehensive 15-20 page reports (4000-5000 words)
+- Returns structured `ReportData` with:
+  - `short_summary`: 2-3 sentence overview
+  - `markdown_report`: Full detailed report
+  - `follow_up_questions`: Suggested research topics
+- Creates detailed sections with analysis, examples, and conclusions
 
 ## Interactive Research Flow
 
@@ -59,7 +66,7 @@ User Query
                 │                                                             │
                 │                                                             └──→ Planner Agent (gpt-4o)
                 │                                                                          ├──→ Search Agent(s) (parallel)
-                │                                                                          └──→ Writer Agent (gpt-4o)
+                │                                                                          └──→ Writer Agent (o3-mini)
                 │                                                                                     └──→ PDF Generator Agent
                 │                                                                                                └──→ Report + PDF
                 │
@@ -67,7 +74,7 @@ User Query
                                └──→ Direct Research
                                           └──→ Planner Agent (gpt-4o)
                                                        ├──→ Search Agent(s) (parallel)
-                                                       └──→ Writer Agent (gpt-4o)
+                                                       └──→ Writer Agent (o3-mini)
                                                                      └──→ PDF Generator Agent
                                                                                 └──→ Report + PDF
 ```
@@ -76,26 +83,49 @@ User Query
 
 **Triage Agent** (`triage_agent.py`)
 - Analyzes query specificity and determines if clarifications are needed
-- Routes to either clarifying questions or direct research
-- Uses GPT-4o-mini for fast, cost-effective decision making
+- Routes to either clarifying questions or direct research using agent handoffs
+- Uses `gpt-4o-mini` for fast, cost-effective decision making
 - Looks for vague terms, missing context, or broad requests
+- Can handoff to either `new_clarifying_agent()` or `new_instruction_agent()`
 
-**Clarifying Agent** (`clarifying_agent.py`)  
+**Clarifying Agent** (`clarifying_agent.py`)
+- Uses `gpt-4o-mini` model for question generation
 - Generates 2-3 targeted questions to gather missing information
 - Focuses on preferences, constraints, and specific requirements
-- Uses structured output (`Clarifications` model) for consistent formatting
-- Triggers Temporal workflow updates for user interaction
+- Returns structured output (`Clarifications` model with `questions` list)
+- Can handoff to `new_instruction_agent()` after collecting questions
+- Integrates with Temporal workflow updates for user interaction
 
 **Instruction Agent** (`instruction_agent.py`)
-- Enriches the original query with user responses to clarifying questions
-- Optimizes the enhanced query for the research pipeline
+- Uses `gpt-4o-mini` model for query enhancement
+- Enriches original query with user responses to clarifying questions
 - Processes specific queries that don't need clarifications
-- Prepares refined input for the planner agent
+- Rewrites queries into detailed research instructions using first-person perspective
+- Can handoff to `new_planner_agent()` with enriched query
+- Handles language preferences and output formatting requirements
 
-**Planner Agent** - Same as basic flow
-**Search Agent** - Same as basic flow  
-**Writer Agent** - Same as basic flow
-**PDF Generator Agent** (`pdf_generator_agent.py`) - Converts markdown reports to professionally formatted PDFs
+**PDF Generator Agent** (`pdf_generator_agent.py`)
+- Uses `gpt-4o-mini` for intelligent formatting analysis and styling decisions
+- Calls the `generate_pdf` activity with 30-second timeout for actual PDF creation
+- Returns structured output (`PDFReportData`) including:
+  - `success`: Boolean indicating generation status
+  - `formatting_notes`: AI-generated notes about styling decisions
+  - `pdf_file_path`: Path to generated PDF file (if successful)
+  - `error_message`: Detailed error information (if failed)
+- Graceful error handling with detailed feedback
+- Professional PDF styling with proper typography and layout
+- Files saved to `pdf_output/` directory with timestamped names
+
+## Agent Handoff Pattern
+
+The research agents use OpenAI's agent handoff pattern to chain execution seamlessly:
+
+- **Triage Agent** → Can handoff to either **Clarifying Agent** or **Instruction Agent**
+- **Clarifying Agent** → Handoffs to **Instruction Agent** after collecting questions
+- **Instruction Agent** → Handoffs to **Planner Agent** with enriched query
+- **Other agents** → Execute independently without handoffs (Planner, Search, Writer, PDF Generator)
+
+This pattern allows complex multi-agent workflows where one agent can automatically transfer control to the next appropriate agent in the pipeline, enabling sophisticated research orchestration with minimal coordination overhead.
 
 ## Shared Agent Components
 
@@ -147,7 +177,7 @@ The interactive workflow will ask clarifying questions like:
 **Research Models:**
 - **Planner Agent**: `gpt-4o` - Complex search strategy
 - **Search Agent**: Uses web search APIs (no LLM)
-- **Writer Agent**: `gpt-4o` - High-quality report synthesis
-- **PDF Generator Agent**: Uses WeasyPrint (no LLM) - Professional PDF formatting
+- **Writer Agent**: `o3-mini` - High-quality report synthesis
+- **PDF Generator Agent**: `gpt-4o-mini` - PDF formatting decisions + WeasyPrint for generation
 
 This configuration balances cost efficiency for routing/clarification logic while using more powerful models for core research tasks.

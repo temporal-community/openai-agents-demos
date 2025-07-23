@@ -78,3 +78,24 @@ class ResearchInteraction:
             f"{self.current_question_index}/{len(self.clarification_questions or [])}"
         )
         return f"Query: {self.original_query}, Status: {self.status}, Questions: {questions_progress}"
+
+
+class ResearchInteractionDict(BaseModel):
+    """Compatibility wrapper that provides ResearchInteraction-like interface"""
+
+    original_query: str | None = None
+    clarification_questions: list[str] = []
+    clarification_responses: dict[str, str] = {}
+    current_question_index: int = 0
+    current_question: str | None = None
+    status: str = "pending"
+    research_completed: bool = False
+    final_result: str | None = None
+
+    def get_current_question(self) -> str | None:
+        """Get the current question that needs an answer"""
+        return self.current_question
+
+    def has_more_questions(self) -> bool:
+        """Check if there are more questions to answer"""
+        return self.current_question_index < len(self.clarification_questions)

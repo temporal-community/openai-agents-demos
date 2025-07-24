@@ -10,7 +10,7 @@ More Temporal OpenAI Agents SDK samples can be found in Temporal's [samples-pyth
 
 1. **Python 3.10+** - Required for the demos
 2. **Temporal Server** - Must be running locally on `localhost:7233`
-3. **OpenAI API Key** - Set as environment variable `OPENAI_API_KEY`
+3. **OpenAI API Key** - Set as environment variable `OPENAI_API_KEY` (note, you will need enough quota on in your [OpenAI account](https://platform.openai.com/docs/guides/error-codes/api-errors) to run this demo)
 4. **PDF Generation Dependencies** - Required for PDF output (optional)
 
 ### Starting Temporal Server

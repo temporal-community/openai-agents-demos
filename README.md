@@ -2,6 +2,9 @@
 
 This repository contains four standalone demos showcasing the OpenAI Agents Python SDK integrated with Temporal's durable execution.
 
+See the [Long running agents & human-in-the-loop
+](https://openai.github.io/openai-agents-python/running_agents/#long-running-agents-human-in-the-loop) section of the OpenAI's docs for more.
+
 [Watch the demo](https://www.youtube.com/watch?v=fFBZqzT4DD8) to see it in action.
 
 [![Watch the demo](./demo-youtube.jpg)](https://www.youtube.com/watch?v=fFBZqzT4DD8)

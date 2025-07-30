@@ -2,7 +2,7 @@
 
 This repository contains four standalone demos showcasing the OpenAI Agents Python SDK integrated with Temporal's durable execution.
 
-[Watch the demo on YouTube)](https://www.youtube.com/watch?v=fFBZqzT4DD8) to see it in action.
+[Watch the demo](https://www.youtube.com/watch?v=fFBZqzT4DD8) to see it in action.
 
 [![Watch the demo](./demo-youtube.jpg)](https://www.youtube.com/watch?v=fFBZqzT4DD8)
 

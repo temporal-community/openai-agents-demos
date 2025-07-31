@@ -10,14 +10,11 @@ logging.getLogger("openai.agents").setLevel(logging.CRITICAL)
 
 from temporalio.client import Client
 from temporalio.common import RetryPolicy
-from temporalio.contrib.openai_agents import (
-    ModelActivityParameters,
-    set_open_ai_agent_temporal_overrides,
-)
+from temporalio.contrib.openai_agents import OpenAIAgentsPlugin, ModelActivityParameters
+
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.worker import Worker
 
-from openai_agents.serializable_model_activity import SerializableModelActivity
 from openai_agents.workflows.get_weather_activity import get_weather
 from openai_agents.workflows.hello_world_workflow import HelloWorldAgent
 from openai_agents.workflows.interactive_research_workflow import (
@@ -31,39 +28,40 @@ from openai_agents.workflows.tools_workflow import ToolsWorkflow
 async def main():
     logging.basicConfig(level=logging.INFO)
 
-    with set_open_ai_agent_temporal_overrides(
-        model_params=ModelActivityParameters(
-            start_to_close_timeout=timedelta(seconds=35),
-            schedule_to_close_timeout=timedelta(seconds=300),
-            retry_policy=RetryPolicy(
-                backoff_coefficient=2.0,
-                initial_interval=timedelta(seconds=1),
-                maximum_interval=timedelta(seconds=5),
+    # Create client connected to server at the given address
+    client = await Client.connect(
+        "localhost:7233",
+        plugins=[
+            OpenAIAgentsPlugin(
+                model_params=ModelActivityParameters(
+                    start_to_close_timeout=timedelta(seconds=35),
+                    schedule_to_close_timeout=timedelta(seconds=300),
+                    retry_policy=RetryPolicy(
+                        backoff_coefficient=2.0,
+                        initial_interval=timedelta(seconds=1),
+                        maximum_interval=timedelta(seconds=5),
+                    ),
+                )
             ),
-        ),
-    ):
-        # Create client connected to server at the given address
-        client = await Client.connect(
-            "localhost:7233",
-            data_converter=pydantic_data_converter,
-        )
+        ],
+        data_converter=pydantic_data_converter,
+    )
 
-        worker = Worker(
-            client,
-            task_queue="openai-agents-task-queue",
-            workflows=[
-                HelloWorldAgent,
-                ToolsWorkflow,
-                ResearchWorkflow,
-                InteractiveResearchWorkflow,
-            ],
-            activities=[
-                SerializableModelActivity().invoke_model_activity,
-                get_weather,
-                generate_pdf,
-            ],
-        )
-        await worker.run()
+    worker = Worker(
+        client,
+        task_queue="openai-agents-task-queue",
+        workflows=[
+            HelloWorldAgent,
+            ToolsWorkflow,
+            ResearchWorkflow,
+            InteractiveResearchWorkflow,
+        ],
+        activities=[
+            get_weather,
+            generate_pdf,
+        ],
+    )
+    await worker.run()
 
 
 if __name__ == "__main__":

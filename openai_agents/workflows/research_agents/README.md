@@ -44,7 +44,7 @@ User Query → Planner Agent → Search Agent(s) → Writer Agent → Markdown R
 
 **Writer Agent** (`writer_agent.py`)
 - Uses `o3-mini` model for high-quality report synthesis
-- Generates comprehensive 15-20 page reports (4000-5000 words)
+- Generates comprehensive 5-10 page reports (800-2000 words)
 - Returns structured `ReportData` with:
   - `short_summary`: 2-3 sentence overview
   - `markdown_report`: Full detailed report

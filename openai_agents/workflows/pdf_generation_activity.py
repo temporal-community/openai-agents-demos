@@ -89,7 +89,6 @@ async def generate_pdf(
 
         # Generate PDF and save to file
         import datetime
-        import os
         from pathlib import Path
 
         # Create pdf_output directory if it doesn't exist

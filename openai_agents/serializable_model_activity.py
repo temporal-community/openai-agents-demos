@@ -2,9 +2,10 @@
 
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
-from temporalio.contrib.openai_agents import ModelActivity as BaseModelActivity
+from temporalio.contrib.openai_agents._invoke_model_activity import ModelActivity as BaseModelActivity
 from temporalio.contrib.openai_agents._invoke_model_activity import ActivityModelInput
 from temporalio import activity
+from agents.items import ModelResponse
 
 
 class SerializableUsage(BaseModel):
@@ -107,10 +108,10 @@ class SerializableModelActivity(BaseModelActivity):
     """ModelActivity wrapper that returns serializable responses."""
 
     @activity.defn
-    async def invoke_model_activity(self, input: ActivityModelInput) -> SerializableModelResponse:
+    async def invoke_model_activity(self, input: ActivityModelInput) -> ModelResponse:
         """Activity that invokes a model and returns a serializable response."""
         # Call the parent implementation to get the ModelResponse
         response = await super().invoke_model_activity(input)
         
         # Convert to serializable format
-        return SerializableModelResponse.from_model_response(response)
+        return SerializableModelResponse.from_model_response(response)  # type: ignore[return-value]

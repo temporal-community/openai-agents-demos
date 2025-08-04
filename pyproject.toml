@@ -7,9 +7,9 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "temporalio>=1.14.1,<2",
+    "temporalio>=1.15.0,<2",
     "openai-agents>=0.0.19",
-    "temporalio[openai-agents]>=1.14.1",
+    "temporalio[openai-agents]>=1.15.0",
     "pydantic>=2.10.6,<3",
     "weasyprint>=61.0.0",
     "markdown>=3.4.0",

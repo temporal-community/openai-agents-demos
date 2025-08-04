@@ -34,7 +34,7 @@ async def main():
             OpenAIAgentsPlugin(
                 model_params=ModelActivityParameters(
                     start_to_close_timeout=timedelta(seconds=120),
-                    schedule_to_close_timeout=timedelta(seconds=300),
+                    schedule_to_close_timeout=timedelta(seconds=500),
                     retry_policy=RetryPolicy(
                         backoff_coefficient=2.0,
                         initial_interval=timedelta(seconds=1),

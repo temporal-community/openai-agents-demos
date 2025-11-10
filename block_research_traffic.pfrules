@@ -1,0 +1,17 @@
+# Block specific OpenAI API IPs
+block out proto tcp from any to 172.66.0.243 port 443
+block out proto tcp from any to 162.159.140.245 port 443
+
+# Allow ALL loopback traffic
+pass on lo0 all
+
+# Allow traffic to localhost IP (covers hostname resolution to 127.0.0.1)
+pass out proto tcp from any to 127.0.0.1
+pass in proto tcp from any to 127.0.0.1
+
+# Allow DNS queries (needed to resolve hostnames)
+pass out proto udp from any to any port 53
+pass out proto tcp from any to any port 53
+
+# Allow mDNS for .local hostname resolution
+pass out proto udp from any to any port 5353

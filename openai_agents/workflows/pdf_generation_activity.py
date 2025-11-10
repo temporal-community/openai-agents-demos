@@ -58,57 +58,51 @@ async def generate_pdf(
             error_message="weasyprint library not available",
         )
 
-    try:
-        # Convert markdown to HTML
-        html_content = markdown.markdown(
-            markdown_content, extensions=["tables", "fenced_code", "toc"]
-        )
+    # Convert markdown to HTML
+    html_content = markdown.markdown(
+        markdown_content, extensions=["tables", "fenced_code", "toc"]
+    )
 
-        # Create complete HTML document with styling
-        full_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>{title}</title>
-            <style>
-                {_get_default_css()}
-                {_get_custom_css(styling_options)}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1 class="document-title">{title}</h1>
-                <div class="content">
-                    {html_content}
-                </div>
+    # Create complete HTML document with styling
+    full_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{title}</title>
+        <style>
+            {_get_default_css()}
+            {_get_custom_css(styling_options)}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="document-title">{title}</h1>
+            <div class="content">
+                {html_content}
             </div>
-        </body>
-        </html>
-        """
+        </div>
+    </body>
+    </html>
+    """
 
-        # Generate PDF and save to file
-        import datetime
-        from pathlib import Path
+    # Generate PDF and save to file
+    import datetime
+    from pathlib import Path
 
-        # Create pdf_output directory if it doesn't exist
-        pdf_output_dir = Path("pdf_output")
-        pdf_output_dir.mkdir(exist_ok=True)
+    # Create pdf_output directory if it doesn't exist
+    pdf_output_dir = Path("pdf_output")
+    pdf_output_dir.mkdir(exist_ok=True)
 
-        # Create a unique filename with timestamp
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"research_report_{timestamp}.pdf"
-        pdf_path = pdf_output_dir / filename
+    # Create a unique filename with timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"research_report_{timestamp}.pdf"
+    pdf_path = pdf_output_dir / filename
 
-        # Generate PDF directly to file
-        weasyprint.HTML(string=full_html).wrie_pdf(str(pdf_path))
+    # Generate PDF directly to file
+    weasyprint.HTML(string=full_html).write_pdf(str(pdf_path))
 
-        return PDFGenerationResult(pdf_file_path=str(pdf_path), success=True)
-
-    except Exception as e:
-        return PDFGenerationResult(
-            pdf_file_path="", success=False, error_message=str(e)
-        )
+    return PDFGenerationResult(pdf_file_path=str(pdf_path), success=True)
 
 
 def _get_default_css() -> str:

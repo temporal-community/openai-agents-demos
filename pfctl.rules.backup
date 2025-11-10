@@ -1,0 +1,4 @@
+scrub-anchor "com.apple/*" all fragment reassemble
+scrub-anchor "com.apple.internet-sharing" all fragment reassemble
+anchor "com.apple/*" all
+anchor "com.apple.internet-sharing" all

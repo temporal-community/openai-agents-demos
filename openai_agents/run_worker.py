@@ -9,8 +9,7 @@ logging.getLogger("openai.agents").setLevel(logging.CRITICAL)
 
 from temporalio.client import Client
 from temporalio.common import RetryPolicy
-from temporalio.contrib.openai_agents import OpenAIAgentsPlugin, ModelActivityParameters
-
+from temporalio.contrib.openai_agents import ModelActivityParameters, OpenAIAgentsPlugin
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.worker import Worker
 
@@ -33,7 +32,7 @@ async def main():
         plugins=[
             OpenAIAgentsPlugin(
                 model_params=ModelActivityParameters(
-                    start_to_close_timeout=timedelta(seconds=90),
+                    start_to_close_timeout=timedelta(seconds=200),
                     schedule_to_close_timeout=timedelta(seconds=500),
                     retry_policy=RetryPolicy(
                         backoff_coefficient=2.0,

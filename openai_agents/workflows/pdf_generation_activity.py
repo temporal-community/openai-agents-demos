@@ -100,7 +100,7 @@ async def generate_pdf(
     pdf_path = pdf_output_dir / filename
 
     # Generate PDF directly to file
-    weasyprint.HTML(string=full_html).write_pdf(str(pdf_path))
+    weasyprint.HTML(string=full_html).writ_pdf(str(pdf_path))
 
     return PDFGenerationResult(pdf_file_path=str(pdf_path), success=True)
 

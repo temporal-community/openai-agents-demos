@@ -41,7 +41,7 @@ def new_pdf_generator_agent():
     return Agent(
         name="PDFGeneratorAgent",
         instructions=PDF_GENERATION_PROMPT,
-        model="gpt-5",
+        model="gpt-5-nano",
         tools=[
             temporal_agents.workflow.activity_as_tool(
                 generate_pdf, start_to_close_timeout=timedelta(seconds=30)

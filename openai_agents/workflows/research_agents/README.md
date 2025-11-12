@@ -43,7 +43,7 @@ User Query → Planner Agent → Search Agent(s) → Writer Agent → Markdown R
 - Uses no LLM model directly - just processes search tool results
 
 **Writer Agent** (`writer_agent.py`)
-- Uses `o3-mini` model for high-quality report synthesis
+- Uses `gpt-5` model for high-quality report synthesis
 - Generates comprehensive 5-10 page reports (800-2000 words)
 - Returns structured `ReportData` with:
   - `short_summary`: 2-3 sentence overview
@@ -66,7 +66,7 @@ User Query
                 │                                                             │
                 │                                                             └──→ Planner Agent (gpt-4o)
                 │                                                                          ├──→ Search Agent(s) (parallel)
-                │                                                                          └──→ Writer Agent (o3-mini)
+                │                                                                          └──→ Writer Agent (gpt-5)
                 │                                                                                     └──→ PDF Generator Agent
                 │                                                                                                └──→ Report + PDF
                 │
@@ -74,7 +74,7 @@ User Query
                                └──→ Direct Research
                                           └──→ Planner Agent (gpt-4o)
                                                        ├──→ Search Agent(s) (parallel)
-                                                       └──→ Writer Agent (o3-mini)
+                                                       └──→ Writer Agent (gpt-5)
                                                                      └──→ PDF Generator Agent
                                                                                 └──→ Report + PDF
 ```
@@ -177,7 +177,7 @@ The interactive workflow will ask clarifying questions like:
 **Research Models:**
 - **Planner Agent**: `gpt-4o` - Complex search strategy
 - **Search Agent**: Uses web search APIs (no LLM)
-- **Writer Agent**: `o3-mini` - High-quality report synthesis
+- **Writer Agent**: `gpt-5` - High-quality report synthesis
 - **PDF Generator Agent**: `gpt-4o-mini` - PDF formatting decisions + WeasyPrint for generation
 
 This configuration balances cost efficiency for routing/clarification logic while using more powerful models for core research tasks.

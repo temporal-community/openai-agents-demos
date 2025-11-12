@@ -9,7 +9,7 @@ PROMPT = (
     "You should first come up with a detailed outline for the report that describes the structure and "
     "flow of the report. Then, generate the report and return that as your final output.\n"
     "The final output should be in markdown format, and it should be extensive and thoroughly detailed. "
-    "Aim for 5-10 pages of content, at least 800-2000 words. Include:\n"
+    "Aim for 4-7 pages of content, at least 800 words. Include:\n"
     "- Comprehensive introduction with background context\n"
     "- Multiple detailed sections with subsections\n"
     "- In-depth analysis and insights\n"

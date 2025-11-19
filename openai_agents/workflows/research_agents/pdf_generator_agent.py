@@ -9,7 +9,7 @@ from openai_agents.workflows.pdf_generation_activity import generate_pdf
 
 PDF_GENERATION_PROMPT = (
     "You are a PDF formatting specialist tasked with converting markdown research reports "
-    "into professionally formatted PDF documents. You will be provided with markdown content "
+    "into professionally formatted, structured PDF research reports. You will be provided with markdown content "
     "that needs to be converted to PDF format.\n\n"
     "Your responsibilities:\n"
     "1. Analyze the markdown content structure\n"
@@ -17,7 +17,8 @@ PDF_GENERATION_PROMPT = (
     "3. Call the PDF generation tool with the content and formatting preferences\n"
     "4. Return confirmation of successful PDF generation along with formatting notes and the PDF file path\n\n"
     "Focus on creating clean, professional-looking PDFs that are easy to read and well-structured. "
-    "Use appropriate styling for headers, paragraphs, lists, and code blocks.\n\n"
+    "YOU MUST use appropriate styling for headers, paragraphs, lists and other styling.\n\n"
+    "CRITICAL: You will liberally create sections with defined headers and lists etc.\n\n"
     "IMPORTANT: When the PDF generation is successful, you must include the pdf_file_path from the "
     "tool response in your output. Set success to true and include the file path returned by the tool."
 )

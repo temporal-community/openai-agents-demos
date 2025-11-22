@@ -1,3 +1,4 @@
+import base64
 import os
 from dataclasses import dataclass
 from typing import Optional
@@ -28,6 +29,15 @@ class StylingOptions(BaseModel):
 
 
 @dataclass
+class ImageData:
+    """Image data for embedding in PDF"""
+    data: bytes  # Raw image bytes
+    mime_type: str  # e.g., "image/png", "image/jpeg"
+    caption: Optional[str] = None
+    css_class: Optional[str] = "report-image"
+
+
+@dataclass
 class PDFGenerationResult:
     pdf_file_path: str
     success: bool
@@ -39,17 +49,20 @@ async def generate_pdf(
     markdown_content: str,
     title: str = "Research Report",
     styling_options: Optional[StylingOptions] = None,
+    image_path: Optional[str] = None,
 ) -> PDFGenerationResult:
     """
-    Generate PDF from markdown content with specified styling.
+    Generate PDF from markdown content with optional hero image.
 
     Args:
         markdown_content: The markdown content to convert to PDF
         title: Title for the PDF document
         styling_options: Optional styling configurations
+        image_path: Optional FILE PATH (not bytes) to image file to embed as hero image.
+                   The image will be read from this path and embedded in the PDF.
 
     Returns:
-        PDFGenerationResult with pdf_bytes and success status
+        PDFGenerationResult with pdf_file_path and success status
     """
     if not WEASYPRINT_AVAILABLE or weasyprint is None:
         return PDFGenerationResult(
@@ -63,6 +76,48 @@ async def generate_pdf(
         markdown_content, extensions=["tables", "fenced_code", "toc"]
     )
 
+    # Load image from file path if provided
+    hero_image = None
+    if image_path:
+        try:
+            from pathlib import Path
+            image_file = Path(image_path)
+            if image_file.exists():
+                with open(image_file, "rb") as f:
+                    image_bytes = f.read()
+
+                # Determine mime type from extension
+                ext = image_file.suffix.lower().lstrip('.')
+                mime_type = f"image/{ext}" if ext in ['png', 'jpg', 'jpeg', 'webp'] else "image/png"
+
+                # Create ImageData from file
+                hero_image = ImageData(
+                    data=image_bytes,
+                    mime_type=mime_type,
+                    caption=None,  # Will be set by agent if needed
+                    css_class="hero-image"
+                )
+                activity.logger.info(f"Loaded image from {image_path}: {len(image_bytes)} bytes")
+            else:
+                activity.logger.warning(f"Image file not found: {image_path}")
+        except Exception as e:
+            activity.logger.error(f"Failed to load image from {image_path}: {str(e)}")
+
+    # Generate hero image HTML if provided
+    hero_image_html = ""
+    if hero_image and hero_image.data:
+        data_uri = _image_to_base64_data_uri(hero_image.data, hero_image.mime_type)
+        caption_html = ""
+        if hero_image.caption:
+            caption_html = f'<p class="image-caption">{hero_image.caption}</p>'
+
+        hero_image_html = f'''
+    <div class="image-container">
+        <img src="{data_uri}" alt="Research illustration" class="{hero_image.css_class}">
+        {caption_html}
+    </div>
+    '''
+
     # Create complete HTML document with styling
     full_html = f"""
     <!DOCTYPE html>
@@ -72,12 +127,14 @@ async def generate_pdf(
         <title>{title}</title>
         <style>
             {_get_default_css()}
+            {_get_image_css()}
             {_get_custom_css(styling_options)}
         </style>
     </head>
     <body>
         <div class="container">
             <h1 class="document-title">{title}</h1>
+            {hero_image_html}
             <div class="content">
                 {html_content}
             </div>
@@ -100,7 +157,7 @@ async def generate_pdf(
     pdf_path = pdf_output_dir / filename
 
     # Generate PDF directly to file
-    weasyprint.HTML(string=full_html).writ_pdf(str(pdf_path))
+    weasyprint.HTML(string=full_html).write_pdf(str(pdf_path))
 
     return PDFGenerationResult(pdf_file_path=str(pdf_path), success=True)
 
@@ -221,6 +278,76 @@ def _get_default_css() -> str:
                 font-size: 12px;
                 color: #666;
             }
+        }
+    """
+
+
+def _image_to_base64_data_uri(image_bytes: bytes, mime_type: str) -> str:
+    """
+    Convert image bytes to a base64 data URI for HTML embedding.
+
+    Args:
+        image_bytes: Raw image bytes
+        mime_type: MIME type (e.g., 'image/png', 'image/jpeg')
+
+    Returns:
+        Data URI string ready for HTML embedding
+    """
+    # Encode to base64 and decode to UTF-8 string (critical for Python 3)
+    encoded = base64.b64encode(image_bytes).decode('utf-8')
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def _get_image_css() -> str:
+    """CSS styling for images in PDFs."""
+    return """
+        /* Hero image under title */
+        .hero-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 30px auto;
+            page-break-inside: avoid;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Standard report images */
+        .report-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            page-break-inside: avoid;
+        }
+
+        /* Images within content */
+        .content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 15px 0;
+        }
+
+        /* High-quality image rendering */
+        img {
+            image-rendering: crisp-edges;
+        }
+
+        /* Image container */
+        .image-container {
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        /* Image captions */
+        .image-caption {
+            text-align: center;
+            font-style: italic;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 8px;
+            margin-bottom: 20px;
         }
     """
 

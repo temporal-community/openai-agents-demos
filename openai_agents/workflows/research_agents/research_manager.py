@@ -93,25 +93,24 @@ class InteractiveResearchManager:
         """Original direct research flow with parallel image generation"""
         trace_id = gen_trace_id()
         with trace("Research trace", trace_id=trace_id):
-            # Run search planning and image generation in parallel
+            # Start image generation immediately to run in parallel with entire research pipeline
             workflow.logger.info(
-                "Starting parallel execution: search planning and image generation"
+                "Starting image generation in parallel with research pipeline"
             )
-
-            plan_task = asyncio.create_task(self._plan_searches(query))
             image_task = asyncio.create_task(self._generate_research_image(query))
 
-            # Wait for both
-            search_plan = await plan_task
+            # Perform research pipeline (planning, searching, writing)
+            search_plan = await self._plan_searches(query)
+            search_results = await self._perform_searches(search_plan)
+            report = await self._write_report(query, search_results)
+
+            # Wait for image generation to complete (if not already done)
+            workflow.logger.info("Waiting for image generation to complete")
             image_path, image_description = await image_task
 
             # Store image data for PDF generation
             self.research_image_path = image_path
             self.research_image_description = image_description
-
-            # Continue with search and report generation
-            search_results = await self._perform_searches(search_plan)
-            report = await self._write_report(query, search_results)
 
         return report
 
@@ -135,25 +134,25 @@ class InteractiveResearchManager:
                 )
             else:
                 # No clarifications needed, continue with research
-                # Run search planning and image generation in parallel
+                # Start image generation immediately to run in parallel with entire research pipeline
                 workflow.logger.info(
-                    "Starting parallel execution: search planning and image generation"
+                    "Starting image generation in parallel with research pipeline"
                 )
-
-                plan_task = asyncio.create_task(self._plan_searches(query))
                 image_task = asyncio.create_task(self._generate_research_image(query))
 
-                # Wait for both
-                search_plan = await plan_task
+                # Perform research pipeline (planning, searching, writing)
+                search_plan = await self._plan_searches(query)
+                search_results = await self._perform_searches(search_plan)
+                report = await self._write_report(query, search_results)
+
+                # Wait for image generation to complete (if not already done)
+                workflow.logger.info("Waiting for image generation to complete")
                 image_path, image_description = await image_task
 
                 # Store image data for PDF generation
                 self.research_image_path = image_path
                 self.research_image_description = image_description
 
-                # Continue with search and report generation
-                search_results = await self._perform_searches(search_plan)
-                report = await self._write_report(query, search_results)
                 return ClarificationResult(
                     needs_clarifications=False,
                     research_output=report.markdown_report,
@@ -169,25 +168,24 @@ class InteractiveResearchManager:
             # Enrich the query with clarification responses
             enriched_query = self._enrich_query(original_query, questions, responses)
 
-            # Run search planning and image generation in parallel
+            # Start image generation immediately to run in parallel with entire research pipeline
             workflow.logger.info(
-                "Starting parallel execution: search planning and image generation"
+                "Starting image generation in parallel with research pipeline"
             )
-
-            plan_task = asyncio.create_task(self._plan_searches(enriched_query))
             image_task = asyncio.create_task(self._generate_research_image(enriched_query))
 
-            # Wait for both
-            search_plan = await plan_task
+            # Perform research pipeline (planning, searching, writing)
+            search_plan = await self._plan_searches(enriched_query)
+            search_results = await self._perform_searches(search_plan)
+            report = await self._write_report(enriched_query, search_results)
+
+            # Wait for image generation to complete (if not already done)
+            workflow.logger.info("Waiting for image generation to complete")
             image_path, image_description = await image_task
 
             # Store image data for PDF generation
             self.research_image_path = image_path
             self.research_image_description = image_description
-
-            # Continue with search and report generation
-            search_results = await self._perform_searches(search_plan)
-            report = await self._write_report(enriched_query, search_results)
 
             return report
 

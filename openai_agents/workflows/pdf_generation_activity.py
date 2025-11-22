@@ -31,6 +31,7 @@ class StylingOptions(BaseModel):
 @dataclass
 class ImageData:
     """Image data for embedding in PDF"""
+
     data: bytes  # Raw image bytes
     mime_type: str  # e.g., "image/png", "image/jpeg"
     caption: Optional[str] = None
@@ -81,23 +82,30 @@ async def generate_pdf(
     if image_path:
         try:
             from pathlib import Path
+
             image_file = Path(image_path)
             if image_file.exists():
                 with open(image_file, "rb") as f:
                     image_bytes = f.read()
 
                 # Determine mime type from extension
-                ext = image_file.suffix.lower().lstrip('.')
-                mime_type = f"image/{ext}" if ext in ['png', 'jpg', 'jpeg', 'webp'] else "image/png"
+                ext = image_file.suffix.lower().lstrip(".")
+                mime_type = (
+                    f"image/{ext}"
+                    if ext in ["png", "jpg", "jpeg", "webp"]
+                    else "image/png"
+                )
 
                 # Create ImageData from file
                 hero_image = ImageData(
                     data=image_bytes,
                     mime_type=mime_type,
                     caption=None,  # Will be set by agent if needed
-                    css_class="hero-image"
+                    css_class="hero-image",
                 )
-                activity.logger.info(f"Loaded image from {image_path}: {len(image_bytes)} bytes")
+                activity.logger.info(
+                    f"Loaded image from {image_path}: {len(image_bytes)} bytes"
+                )
             else:
                 activity.logger.warning(f"Image file not found: {image_path}")
         except Exception as e:
@@ -111,12 +119,12 @@ async def generate_pdf(
         if hero_image.caption:
             caption_html = f'<p class="image-caption">{hero_image.caption}</p>'
 
-        hero_image_html = f'''
+        hero_image_html = f"""
     <div class="image-container">
         <img src="{data_uri}" alt="Research illustration" class="{hero_image.css_class}">
         {caption_html}
     </div>
-    '''
+    """
 
     # Create complete HTML document with styling
     full_html = f"""
@@ -294,7 +302,7 @@ def _image_to_base64_data_uri(image_bytes: bytes, mime_type: str) -> str:
         Data URI string ready for HTML embedding
     """
     # Encode to base64 and decode to UTF-8 string (critical for Python 3)
-    encoded = base64.b64encode(image_bytes).decode('utf-8')
+    encoded = base64.b64encode(image_bytes).decode("utf-8")
     return f"data:{mime_type};base64,{encoded}"
 
 

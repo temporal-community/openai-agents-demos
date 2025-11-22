@@ -151,7 +151,7 @@ uv run openai_agents/run_research_workflow.py "Tell me about quantum computing"
 
 ### Demo 4: Multi-Agent Interactive Research Workflow
 
-An enhanced version of the research workflow with interactive clarifying questions to refine research parameters before execution and optional PDF generation.
+An enhanced version of the research workflow with interactive clarifying questions to refine research parameters before execution, AI-generated hero images, and optional PDF generation.
 
 This example is designed to be similar to the OpenAI Cookbook: [Introduction to deep research in the OpenAI API](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api)
 
@@ -160,7 +160,9 @@ This example is designed to be similar to the OpenAI Cookbook: [Introduction to 
 - `openai_agents/workflows/research_agents/` - All research agent components
 - `openai_agents/run_interactive_research_workflow.py` - Interactive research client
 - `openai_agents/workflows/pdf_generation_activity.py` - PDF generation activity
+- `openai_agents/workflows/image_generation_activity.py` - Image generation activity
 - `openai_agents/workflows/research_agents/pdf_generator_agent.py` - PDF generation agent
+- `openai_agents/workflows/research_agents/imagegen_agent.py` - Image generation agent
 
 **Agents:**
 - **Triage Agent**: Analyzes research queries and determines if clarifications are needed
@@ -169,7 +171,8 @@ This example is designed to be similar to the OpenAI Cookbook: [Introduction to 
 - **Planner Agent**: Creates web search plans
 - **Search Agent**: Performs web searches
 - **Writer Agent**: Compiles final research reports
-- **PDF Generator Agent**: Converts markdown reports to professionally formatted PDFs
+- **ImageGen Agent**: Generates contextual hero images for reports (runs in parallel with research)
+- **PDF Generator Agent**: Converts markdown reports to professionally formatted PDFs with embedded images
 
 **To run:**
 ```bash
@@ -184,9 +187,13 @@ uv run openai_agents/run_interactive_research_workflow.py "Tell me about quantum
 
 **Output:**
 - `research_report.md` - Comprehensive markdown report
-- `pdf_output/research_report.pdf` - Professionally formatted PDF (if PDF generation is available)
+- `pdf_output/research_report.pdf` - Professionally formatted PDF with AI-generated hero image (if PDF generation is available)
+- `temp_images/` - Generated hero images
 
-**Note:** The interactive workflow may take 2-3 minutes to complete due to web searches and report generation.
+**Image Generation Requirements:**
+Image generation requires an OpenAI account with a verified organization. If your organization is not verified, image generation will silently fail and PDFs will be generated without hero images. To verify your organization, visit https://platform.openai.com/settings/organization/general and click "Verify Organization".
+
+**Note:** The interactive workflow may take 2-3 minutes to complete due to web searches, image generation, and report compilation.
 
 ## Project Structure
 
@@ -210,6 +217,7 @@ openai-agents-demos/
 │       ├── research_bot_workflow.py    # Main research workflow
 │       ├── interactive_research_workflow.py  # Interactive research workflow
 │       ├── pdf_generation_activity.py  # PDF generation activity
+│       ├── image_generation_activity.py # Image generation activity
 │       └── research_agents/            # Research agent components
 │           ├── __init__.py
 │           ├── README.md               # Research agents documentation
@@ -221,6 +229,7 @@ openai-agents-demos/
 │           ├── planner_agent.py        # Research planning agent
 │           ├── search_agent.py         # Web search agent
 │           ├── writer_agent.py         # Report writing agent
+│           ├── imagegen_agent.py       # Image generation agent
 │           └── pdf_generator_agent.py  # PDF generation agent
 ```
 

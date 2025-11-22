@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import timedelta
 from typing import Dict, List, Optional
 
 from temporalio import workflow
@@ -41,12 +40,6 @@ with workflow.unsafe.imports_passed_through():
         ReportData,
         new_writer_agent,
     )
-
-    from openai_agents.workflows.image_generation_activity import (
-        ImageStylingOptions,
-        generate_image,
-    )
-    from openai_agents.workflows.pdf_generation_activity import ImageData
 
 
 @dataclass
@@ -172,7 +165,9 @@ class InteractiveResearchManager:
             workflow.logger.info(
                 "Starting image generation in parallel with research pipeline"
             )
-            image_task = asyncio.create_task(self._generate_research_image(enriched_query))
+            image_task = asyncio.create_task(
+                self._generate_research_image(enriched_query)
+            )
 
             # Perform research pipeline (planning, searching, writing)
             search_plan = await self._plan_searches(enriched_query)
@@ -283,14 +278,16 @@ class InteractiveResearchManager:
         report_data = markdown_result.final_output_as(ReportData)
         return report_data
 
-    async def _generate_research_image(self, query: str) -> tuple[str | None, str | None]:
+    async def _generate_research_image(
+        self, query: str
+    ) -> tuple[str | None, str | None]:
         """
-        Generate an image for the research topic.
+        Generate an image for the research topic using ImageGenAgent.
 
-        Steps:
-        1. Use ImageGenAgent to create a compelling 2-sentence description
-        2. Call image generation activity which generates and saves the image to temp file
-        3. Return temp file path and description
+        The agent will:
+        1. Create a compelling 2-sentence description
+        2. Call the generate_image tool to create and save the image
+        3. Return the file path and description
 
         Args:
             query: The enriched research query
@@ -300,64 +297,70 @@ class InteractiveResearchManager:
         """
         with custom_span("Generate research image"):
             try:
-                # Step 1: Generate image description using the agent (no tool)
-                workflow.logger.info("Creating image description...")
+                workflow.logger.info("Generating image with ImageGenAgent...")
 
                 result = await Runner.run(
                     self.imagegen_agent,
-                    f"Create a 2-sentence image description for: {query}",
+                    f"Create and generate an image for this research topic: {query}",
                     run_config=self.run_config,
                 )
 
                 image_output = result.final_output_as(ImageGenData)
 
-                if not image_output.success:
-                    workflow.logger.warning("Failed to create image description")
-                    return (None, None)
+                if not image_output.success or not image_output.image_file_path:
+                    # Check if it's a non-retryable error
+                    non_retryable_indicators = [
+                        "organization must be verified",
+                        "Your organization must be verified",
+                        "403",
+                        "invalid_request_error",
+                        "insufficient_quota",
+                        "invalid_api_key",
+                        "PydanticSerializationError",
+                        "invalid utf-8 sequence",
+                        "serialization",
+                    ]
 
-                # Step 2: Call image generation activity directly
-                workflow.logger.info(
-                    f"Generating image with description: {image_output.image_description}"
-                )
-
-                try:
-                    image_result = await workflow.execute_activity(
-                        generate_image,
-                        args=[image_output.image_description, ImageStylingOptions()],
-                        start_to_close_timeout=timedelta(seconds=60),
+                    error_msg = image_output.error_message or ""
+                    is_non_retryable = any(
+                        indicator.lower() in error_msg.lower()
+                        for indicator in non_retryable_indicators
                     )
 
-                    if not image_result.success or not image_result.image_file_path:
+                    if is_non_retryable:
                         workflow.logger.warning(
-                            f"Image generation failed: {image_result.error_message}"
+                            f"Non-retryable image generation error: {error_msg}. "
+                            "Continuing without image."
                         )
-                        return (None, None)
-                except Exception as e:
-                    # Handle non-retryable errors (e.g., organization not verified, serialization errors)
-                    workflow.logger.warning(
-                        f"Image generation activity failed: {str(e)}. Continuing without image."
-                    )
+                    else:
+                        workflow.logger.warning(f"Image generation failed: {error_msg}")
+
                     return (None, None)
 
                 workflow.logger.info(
-                    f"Image generated successfully, saved to: {image_result.image_file_path}"
+                    f"Image generated successfully: {image_output.image_file_path}"
                 )
 
-                # Return file path directly (no need to save again)
                 return (
-                    image_result.image_file_path,
+                    image_output.image_file_path,
                     image_output.image_description,
                 )
 
             except Exception as e:
-                workflow.logger.error(f"Error generating research image: {str(e)}")
+                # Catch any exceptions that bubble up (e.g., ApplicationError with non_retryable=True)
+                error_str = str(e)
+                workflow.logger.warning(
+                    f"Image generation activity failed: {error_str}. Continuing without image."
+                )
                 return (None, None)
 
     async def _generate_pdf_report(self, report_data: ReportData) -> str | None:
         """Generate PDF from markdown report using PDF generator agent"""
         with custom_span("Generate PDF report"):
             try:
-                workflow.logger.info("Generating PDF report with PDF generator agent...")
+                workflow.logger.info(
+                    "Generating PDF report with PDF generator agent..."
+                )
 
                 # Build prompt for PDF generator with image path if available
                 if self.research_image_path:
@@ -379,7 +382,10 @@ Instructions: Use the image at IMAGE_PATH as the hero image parameter when calli
                     run_config=self.run_config,
                 )
 
-                from openai_agents.workflows.research_agents.pdf_generator_agent import PDFReportData
+                from openai_agents.workflows.research_agents.pdf_generator_agent import (
+                    PDFReportData,
+                )
+
                 pdf_output = pdf_result.final_output_as(PDFReportData)
 
                 if pdf_output.success and pdf_output.pdf_file_path:
@@ -410,10 +416,13 @@ Instructions: Use the image at IMAGE_PATH as the hero image parameter when calli
         if self.research_image_path:
             try:
                 from pathlib import Path
+
                 image_file = Path(self.research_image_path)
                 if image_file.exists():
                     image_file.unlink()
-                    workflow.logger.info(f"Cleaned up temp image: {self.research_image_path}")
+                    workflow.logger.info(
+                        f"Cleaned up temp image: {self.research_image_path}"
+                    )
             except Exception as e:
                 workflow.logger.warning(f"Failed to cleanup temp image: {str(e)}")
             finally:

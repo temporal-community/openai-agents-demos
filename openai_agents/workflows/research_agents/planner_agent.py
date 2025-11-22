@@ -24,6 +24,6 @@ def new_planner_agent():
     return Agent(
         name="PlannerAgent",
         instructions=PROMPT,
-        model="gpt-4o",
+        model="gpt-4o-mini",
         output_type=WebSearchPlan,
     )

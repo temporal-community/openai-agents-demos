@@ -218,8 +218,10 @@ class InteractiveResearchWorkflow:
     ) -> ResearchInteractionDict:
         """Provide a single clarification response"""
         current_question = self._get_current_question()
-        workflow.logger.info(f"Received clarification answer {self.current_question_index + 1}/{len(self.clarification_questions)}: '{input.answer}' for question: '{current_question}'")
-        
+        workflow.logger.info(
+            f"Received clarification answer {self.current_question_index + 1}/{len(self.clarification_questions)}: '{input.answer}' for question: '{current_question}'"
+        )
+
         # Store answer with question index format for compatibility
         question_key = f"question_{self.current_question_index}"
         self.clarification_responses[question_key] = input.answer
@@ -232,8 +234,10 @@ class InteractiveResearchWorkflow:
         self, input: ClarificationInput
     ) -> ResearchInteractionDict:
         """Provide all clarification responses at once (legacy compatibility)"""
-        workflow.logger.info(f"Received {len(input.responses)} clarification responses: {input.responses}")
-        
+        workflow.logger.info(
+            f"Received {len(input.responses)} clarification responses: {input.responses}"
+        )
+
         self.clarification_responses = input.responses
         # Mark all questions as answered
         self.current_question_index = len(self.clarification_questions)

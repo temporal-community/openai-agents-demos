@@ -58,9 +58,11 @@ async def generate_image(
             quality=styling_options.quality,
             size=styling_options.size,
             output_format=styling_options.output_format,
-            **({
-                "output_compression": styling_options.output_compression
-            } if styling_options.output_compression else {})
+            **(
+                {"output_compression": styling_options.output_compression}
+                if styling_options.output_compression
+                else {}
+            ),
         )
 
         # Extract base64 image data
@@ -77,8 +79,7 @@ async def generate_image(
 
             # Resize with high-quality resampling
             image = image.resize(
-                (styling_options.resize_width, new_height),
-                Image.LANCZOS
+                (styling_options.resize_width, new_height), Image.LANCZOS
             )
 
             # Save to bytes
@@ -87,7 +88,7 @@ async def generate_image(
             image.save(
                 output,
                 format=format_map.get(styling_options.output_format, "PNG"),
-                optimize=True
+                optimize=True,
             )
             image_bytes = output.getvalue()
 
@@ -101,7 +102,9 @@ async def generate_image(
         temp_dir = Path("temp_images")
         temp_dir.mkdir(exist_ok=True)
 
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")  # Include microseconds for uniqueness
+        timestamp = datetime.datetime.now().strftime(
+            "%Y%m%d_%H%M%S_%f"
+        )  # Include microseconds for uniqueness
         ext = styling_options.output_format
         image_path = temp_dir / f"generated_image_{timestamp}.{ext}"
 
@@ -115,9 +118,7 @@ async def generate_image(
         )
 
         return ImageGenerationResult(
-            image_file_path=str(image_path),
-            mime_type=mime_type,
-            success=True
+            image_file_path=str(image_path), mime_type=mime_type, success=True
         )
 
     except Exception as e:
@@ -137,13 +138,15 @@ async def generate_image(
         ]
 
         # If this is a non-retryable error, raise ApplicationError
-        if any(indicator in error_str for indicator in non_retryable_indicators) or \
-           any(indicator in error_type for indicator in non_retryable_indicators):
+        if any(indicator in error_str for indicator in non_retryable_indicators) or any(
+            indicator in error_type for indicator in non_retryable_indicators
+        ):
             from temporalio.exceptions import ApplicationError
+
             raise ApplicationError(
                 f"Image generation failed with non-retryable error: {str(e)}",
                 non_retryable=True,
-                type="ImageGenerationError"
+                type="ImageGenerationError",
             )
 
         # Otherwise return graceful failure for retryable errors
@@ -151,5 +154,5 @@ async def generate_image(
             image_file_path=None,
             mime_type="image/png",
             success=False,
-            error_message=f"Image generation failed: {str(e)}"
+            error_message=f"Image generation failed: {str(e)}",
         )

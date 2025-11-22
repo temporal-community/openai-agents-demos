@@ -64,19 +64,28 @@ User Query
                 │                                     └──→ Instruction Agent (gpt-4o-mini)
                 │                                                   └──→ Enriched Query
                 │                                                             │
-                │                                                             └──→ Planner Agent (gpt-4o)
-                │                                                                          ├──→ Search Agent(s) (parallel)
-                │                                                                          └──→ Writer Agent (gpt-5)
-                │                                                                                     └──→ PDF Generator Agent
-                │                                                                                                └──→ Report + PDF
+                │                                                             ├──→ ImageGen Agent (gpt-4o-mini) ──┐
+                │                                                             │         (runs in parallel)         │
+                │                                                             │                                    │
+                │                                                             └──→ Planner Agent (gpt-4o)         │
+                │                                                                          ├──→ Search Agent(s)    │
+                │                                                                          └──→ Writer Agent       │
+                │                                                                                     │            │
+                │                                                                                     └────────────┴──→ PDF Generator Agent
+                │                                                                                                              └──→ Report + PDF (with image)
                 │
                 └── No → Instruction Agent (gpt-4o-mini)
                                └──→ Direct Research
-                                          └──→ Planner Agent (gpt-4o)
-                                                       ├──→ Search Agent(s) (parallel)
-                                                       └──→ Writer Agent (gpt-5)
-                                                                     └──→ PDF Generator Agent
-                                                                                └──→ Report + PDF
+                                          │
+                                          ├──→ ImageGen Agent (gpt-4o-mini) ──┐
+                                          │         (runs in parallel)         │
+                                          │                                    │
+                                          └──→ Planner Agent (gpt-4o)         │
+                                                       ├──→ Search Agent(s)    │
+                                                       └──→ Writer Agent       │
+                                                                  │            │
+                                                                  └────────────┴──→ PDF Generator Agent
+                                                                                           └──→ Report + PDF (with image)
 ```
 
 ### Agent Roles in Interactive Flow:
@@ -104,6 +113,32 @@ User Query
 - Can handoff to `new_planner_agent()` with enriched query
 - Handles language preferences and output formatting requirements
 
+**ImageGen Agent** (`imagegen_agent.py`)
+- Uses `gpt-4o-mini` model for fast, cost-effective image description generation
+- Generates compelling 2-sentence descriptions that capture the research topic essence
+- Calls the `generate_image` activity (using OpenAI's image generation API) to create contextual hero images
+- Runs in parallel with the entire research pipeline (planning, searching, writing) for maximum efficiency
+- Returns structured output (`ImageGenData`) including:
+  - `success`: Boolean indicating generation status
+  - `image_description`: The 2-sentence description used for generation
+  - `image_file_path`: Path to generated image file in `temp_images/` directory
+  - `error_message`: Detailed error information (if failed)
+- Graceful error handling for non-retryable failures (API quota, organization verification, serialization errors)
+- Images are embedded as hero images in PDF reports under the document title
+
+**Organization Verification Requirement:**
+Image generation requires an OpenAI account with a verified organization. If you encounter a 403 error like:
+```
+Error code: 403 - {'error': {'message': 'Your organization must be verified to use the model...
+```
+
+This means your organization needs verification. The workflow will continue without images and log:
+```
+Non-retryable image generation error: Error code: 403... Continuing without image.
+```
+
+**To fix:** Visit https://platform.openai.com/settings/organization/general and complete the "Verify Organization" process. Image generation will work on the next workflow run.
+
 **PDF Generator Agent** (`pdf_generator_agent.py`)
 - Uses `gpt-4o-mini` for intelligent formatting analysis and styling decisions
 - Calls the `generate_pdf` activity with 30-second timeout for actual PDF creation
@@ -114,6 +149,7 @@ User Query
   - `error_message`: Detailed error information (if failed)
 - Graceful error handling with detailed feedback
 - Professional PDF styling with proper typography and layout
+- Embeds hero images under the document title
 - Files saved to `pdf_output/` directory with timestamped names
 
 ## Agent Handoff Pattern
@@ -134,7 +170,8 @@ All agents in this directory are used by one or both research workflows:
 - **`planner_agent.py`** - Web search planning (used by both workflows)
 - **`search_agent.py`** - Web search execution (used by both workflows)
 - **`writer_agent.py`** - Report generation (used by both workflows)
-- **`pdf_generator_agent.py`** - PDF generation (interactive workflow only)
+- **`imagegen_agent.py`** - Hero image generation (interactive workflow only)
+- **`pdf_generator_agent.py`** - PDF generation with image embedding (interactive workflow only)
 - **`triage_agent.py`** - Query analysis and routing (interactive workflow only)
 - **`clarifying_agent.py`** - Question generation (interactive workflow only)
 - **`instruction_agent.py`** - Query enrichment (interactive workflow only)
@@ -171,13 +208,28 @@ The interactive workflow will ask clarifying questions like:
 
 **Cost-Optimized Models:**
 - **Triage Agent**: `gpt-4o-mini` - Fast routing decisions
-- **Clarifying Agent**: `gpt-4o-mini` - Question generation  
+- **Clarifying Agent**: `gpt-4o-mini` - Question generation
 - **Instruction Agent**: `gpt-4o-mini` - Query enrichment
+- **ImageGen Agent**: `gpt-4o-mini` - Image description generation
 
 **Research Models:**
 - **Planner Agent**: `gpt-4o` - Complex search strategy
-- **Search Agent**: Uses web search APIs (no LLM)
+- **Search Agent**: `gpt-4o-mini` - Web search with required tool usage
 - **Writer Agent**: `gpt-5` - High-quality report synthesis
 - **PDF Generator Agent**: `gpt-4o-mini` - PDF formatting decisions + WeasyPrint for generation
 
-This configuration balances cost efficiency for routing/clarification logic while using more powerful models for core research tasks.
+This configuration balances cost efficiency for routing/clarification/image generation logic while using more powerful models for core research tasks. The ImageGen Agent runs in parallel with the research pipeline to maximize throughput.
+
+## Future Work
+
+### Distributed Worker Compatibility
+
+Currently, the image generation feature writes generated images to the local file system (`temp_images/` directory). This means the workflow is **not compatible with workers running on different hosts** - the PDF Generator Agent must run on the same host as the ImageGen Agent to access the generated image files.
+
+**Limitation:** In a distributed Temporal deployment where activities may execute on different worker hosts, the PDF generation activity may not be able to read the image file created by the image generation activity.
+
+**Potential Solutions:**
+- Store images in cloud object storage (S3, GCS, etc.) instead of local filesystem
+- Use Temporal's blob storage capabilities to pass image data between activities
+- Implement a shared network filesystem accessible by all workers
+- Return base64-encoded image data (requires addressing serialization size limits)

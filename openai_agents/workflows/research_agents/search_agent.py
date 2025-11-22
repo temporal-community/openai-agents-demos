@@ -16,5 +16,6 @@ def new_search_agent():
         name="Search agent",
         instructions=INSTRUCTIONS,
         tools=[WebSearchTool()],
+        model="gpt-4o-mini",  # nano doesn't properly support WebSearchTool
         model_settings=ModelSettings(tool_choice="required"),
     )

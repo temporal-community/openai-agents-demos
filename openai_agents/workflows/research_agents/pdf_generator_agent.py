@@ -21,6 +21,8 @@ PDF_GENERATION_PROMPT = (
     "Focus on creating clean, professional-looking PDFs that are easy to read and well-structured. "
     "YOU MUST use appropriate styling for headers, paragraphs, lists and other styling.\n\n"
     "CRITICAL: You will liberally create sections with defined headers and lists etc.\n\n"
+    "CRITICAL: If an image exists, it should be displayed as a hero image under the document title on the "
+    "first page and this alone, with the content beginning on the second page.\n\n"
     "IMAGE PATH HANDLING:\n"
     "- The prompt will contain a line starting with 'IMAGE_PATH:' followed by the file path\n"
     "- Extract the file path from this line and pass it to the generate_pdf tool as the image_path parameter\n"

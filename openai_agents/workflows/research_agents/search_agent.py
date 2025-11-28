@@ -13,7 +13,7 @@ INSTRUCTIONS = (
 
 def new_search_agent():
     return Agent(
-        name="Search agent",
+        name="Search agen:t",
         instructions=INSTRUCTIONS,
         tools=[WebSearchTool()],
         model="gpt-4o-mini",  # nano doesn't properly support WebSearchTool

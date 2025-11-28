@@ -27,6 +27,7 @@ PDF_GENERATION_PROMPT = (
     "- The prompt will contain a line starting with 'IMAGE_PATH:' followed by the file path\n"
     "- Extract the file path from this line and pass it to the generate_pdf tool as the image_path parameter\n"
     "- The image will be displayed as a hero image under the document title\n"
+    "- A title then image will be on the first page, with the content starting on the second page\n"
     "- If no IMAGE_PATH is provided, pass None for the image_path parameter\n\n"
     "IMPORTANT: When the PDF generation is successful, you must include the pdf_file_path from the "
     "tool response in your output. Set success to true and include the file path returned by the tool."

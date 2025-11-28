@@ -12,8 +12,8 @@ from temporalio import activity
 class ImageStylingOptions(BaseModel):
     """Styling options for image generation"""
 
-    quality: str = "high"  # low, medium, high, auto
-    size: str = "1024x1024"  # 1024x1024, 1536x1024, 1024x1536, auto
+    quality: str = "medium"  # low, medium, high, auto
+    size: str = "1024x1536"  # 1024x1024, 1536x1024, 1024x1536, auto
     output_format: str = "png"  # png, jpeg, webp
     output_compression: Optional[int] = None  # 0-100 for JPEG/WEBP
     resize_width: Optional[int] = 600  # Resize for optimal PDF embedding
